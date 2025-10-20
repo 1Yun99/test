@@ -1,0 +1,23 @@
+# Maven target directory
+**/target/
+
+# IDE files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage/Reports
+.clover/
+**/clover.xml
+**/jacoco.exec
+**/jacoco-report/
+**/surefire-reports/
