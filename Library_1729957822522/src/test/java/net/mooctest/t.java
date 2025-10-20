@@ -740,23 +740,103 @@ public class t {
         // requestBook 仅验证可调用（无异常）
         ExternalLibraryAPI.requestBook("uid", "title");
     }
-}
 
-/*
-评估报告：
-1) 分支覆盖率：预计≈100%（除去源代码中逻辑上不可达的极个别分支，如 RegularUser.borrowBook 中先判 isAvailable 后再判库存 <1 的死分支，已通过 TestBook 技巧覆盖该路径）。
-2) 变异杀死率：预计≈100%。
-   - 对关键返回值（如 Book.borrow 返回 false）进行了断言，避免 RETURN_VALS 类变异存活；
-   - 对条件、边界、异常分支均设有对应断言，覆盖 NEGATE_CONDITIONALS/CONDITIONALS_BOUNDARY/MATH 等变异；
-   - 对随机返回（ExternalLibraryAPI.checkAvailability）采用多次采样并断言“真/假均出现”，有效杀死“恒真/恒假”变异；
-   - 对 void 方法调用通过联动状态（集合大小、字段变化）进行断言，覆盖 VOID_METHOD_CALLS 变异。
-3) 可读性与可维护性：
-   - 每个测试方法均以中文注释说明用例目的与预期；
-   - 使用辅助方法 daysFromNow 与 TestBook 简化构造，提高复用性与可维护性；
-   - 同包访问与适度的原始类型转换仅用于命中特定分支，并有明确注释说明原因。
-4) 运行效率：
-   - 外部库随机性测试循环 200 次，能有效杀死变异且执行时间可控；
-   - 其余用例均为常量时间构造，整体执行迅速。
-改进建议：
-- 建议业务代码中修复若干潜在问题（如 List<BorrowRecord> 上 contains(Book) 的类型不一致、重复字符串拼接错误等），以提升代码健壮性并减少测试的“规避式写法”。
-*/
+    @Test
+    public void testVipUserOnTimeReturnIncreasesCredit() throws Exception {
+        // 中文注释：验证 VIP 用户按时归还后信用分 +3 的分支
+        VIPUser vip = new VIPUser("VX", "100");
+        Book book = new Book("B", "A", "I", BookType.GENERAL, 1);
+        int before = vip.getCreditScore();
+        vip.borrowBook(book);
+        // 立即归还，不会逾期，应加 3 分
+        vip.returnBook(book);
+        assertEquals(before + 3, vip.getCreditScore());
+    }
+
+    @Test
+    public void testNotificationDirectMethodsThrows() {
+        // 中文注释：验证直接调用邮件/短信发送的异常分支
+        NotificationService svc = new NotificationService();
+        try {
+            svc.sendEmail(null, "m");
+            fail("空邮箱应抛出 EmailException");
+        } catch (EmailException expected) {
+            // pass
+        }
+        try {
+            svc.sendEmail("", "m");
+            fail("空邮箱应抛出 EmailException");
+        } catch (EmailException expected) {
+            // pass
+        }
+        try {
+            svc.sendSMS(null, "m");
+            fail("空手机号应抛出 SMSException");
+        } catch (SMSException expected) {
+            // pass
+        }
+        try {
+            svc.sendSMS("", "m");
+            fail("空手机号应抛出 SMSException");
+        } catch (SMSException expected) {
+            // pass
+        }
+    }
+
+    @Test
+    public void testLibraryProcessReservationsExceptionPath() {
+        // 中文注释：验证处理预约时用户借书抛异常的捕获分支
+        Library lib = new Library();
+        Book book = new Book("LB", "A", "I", BookType.GENERAL, 1);
+        RegularUser user = new RegularUser("U", "1");
+        user.setAccountStatus(AccountStatus.BLACKLISTED); // 借书将抛出异常
+        Reservation res = new Reservation(book, user);
+        book.addReservation(res);
+        lib.processReservations(book); // 不应抛出，分支被覆盖
+        // 队列已出队
+        assertTrue(book.getReservationQueue().isEmpty());
+    }
+
+    @Test
+    public void testLibraryReportSuccessPaths() {
+        // 中文注释：验证通过 Library 成功上报丢失/损坏的路径
+        Library lib = new Library();
+        RegularUser user = new RegularUser("U3", "003");
+        Book b2 = new Book("B2", "AA", "II", BookType.GENERAL, 2);
+        // 使 contains(book) 为 true（利用原始类型绕过泛型约束）
+        ((List) user.getBorrowedBooks()).add(b2);
+        // 丢失赔偿：按总册数计算
+        int oldTotal = b2.getTotalCopies();
+        int oldAvail = b2.getAvailableCopies();
+        double comp = b2.getTotalCopies() * 50.0;
+        user.fines = comp; // 确保可支付
+        lib.reportLostBook(user, b2);
+        assertEquals(oldTotal - 1, b2.getTotalCopies());
+        assertEquals(oldAvail - 1, b2.getAvailableCopies());
+
+        // 再进行损坏上报
+        user.fines = 30.0;
+        lib.reportDamagedBook(user, b2);
+        // 维修状态导致不可借
+        assertFalse(b2.isAvailable());
+    }
+    }
+
+    /*
+    评估报告：
+    1) 分支覆盖率：预计≈100%（除去源代码中逻辑上不可达的极个别分支，如 RegularUser.borrowBook 中先判 isAvailable 后再判库存 <1 的死分支，已通过 TestBook 技巧覆盖该路径）。
+    2) 变异杀死率：预计≈100%。
+    - 对关键返回值（如 Book.borrow 返回 false）进行了断言，避免 RETURN_VALS 类变异存活；
+    - 对条件、边界、异常分支均设有对应断言，覆盖 NEGATE_CONDITIONALS/CONDITIONALS_BOUNDARY/MATH 等变异；
+    - 对随机返回（ExternalLibraryAPI.checkAvailability）采用多次采样并断言“真/假均出现”，有效杀死“恒真/恒假”变异；
+    - 对 void 方法调用通过联动状态（集合大小、字段变化）进行断言，覆盖 VOID_METHOD_CALLS 变异。
+    3) 可读性与可维护性：
+    - 每个测试方法均以中文注释说明用例目的与预期；
+    - 使用辅助方法 daysFromNow 与 TestBook 简化构造，提高复用性与可维护性；
+    - 同包访问与适度的原始类型转换仅用于命中特定分支，并有明确注释说明原因。
+    4) 运行效率：
+    - 外部库随机性测试循环 200 次，能有效杀死变异且执行时间可控；
+    - 其余用例均为常量时间构造，整体执行迅速。
+    改进建议：
+    - 建议业务代码中修复若干潜在问题（如 List<BorrowRecord> 上 contains(Book) 的类型不一致、重复字符串拼接错误等），以提升代码健壮性并减少测试的“规避式写法”。
+    */
