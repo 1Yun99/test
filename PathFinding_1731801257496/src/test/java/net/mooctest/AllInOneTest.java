@@ -925,4 +925,48 @@ public class AllInOneTest {
         assertEquals(Point.toPoint(4, 2), p);
         assertTrue(Reachability.isReachable(0, 0, 4, 2, g));
     }
+
+    @Test
+    public void testGrid_Clear_PreserveWalkableBit() {
+        Grid g = new Grid(3, 3);
+        // 设置(1,1)为不可行走，同时写入一些node与parent信息
+        g.setWalkable(1, 1, false);
+        g.openNodeIdxUpdate(1, 1, 2);
+        g.nodeParentDirectionUpdate(1, 1, Grid.DIRECTION_RIGHT);
+        // 清理应仅清除寻路相关位，而不改变walkable位
+        g.clear();
+        assertTrue(g.isClean());
+        assertFalse(g.isWalkable(1, 1));
+        // 其他点仍可行走
+        assertTrue(g.isWalkable(0, 0));
+    }
+
+    @Test
+    public void testAStar_Clear_CleansNodesAndMap() {
+        Grid grid = new Grid(4, 4);
+        AStar astar = new AStar();
+        // 将map设入nodes，并打开一个节点，制造脏状态
+        astar.nodes.map = grid;
+        astar.nodes.open(1, 1, 0, 0, Grid.DIRECTION_UP);
+        assertFalse(astar.nodes.isClean());
+        assertFalse(grid.isClean());
+        // 调用clear应全部清理
+        astar.clear();
+        assertTrue(astar.nodes.isClean());
+        assertTrue(grid.isClean());
+    }
+
+    @Test
+    public void testGrid_IsUnwalkable_InfoBits() {
+        Grid g = new Grid(3, 3);
+        int info1 = g.info(1, 1);
+        assertFalse(Grid.isUnwalkable(info1));
+        g.setWalkable(1, 1, false);
+        int info2 = g.info(1, 1);
+        assertTrue(Grid.isUnwalkable(info2));
+        // 恢复为可行走
+        g.setWalkable(1, 1, true);
+        int info3 = g.info(1, 1);
+        assertFalse(Grid.isUnwalkable(info3));
+    }
 }
