@@ -498,4 +498,189 @@ public class AllInOneTest {
         assertEquals(3, Node.getG(n2));
         assertEquals(Grid.DIRECTION_RIGHT, grid.nodeParentDirection(1, 1));
     }
+
+    // ================= 额外强化用例 =================
+
+    @Test(expected = RuntimeException.class)
+    public void testGrid_Constructor_WidthZero_ShouldThrow() {
+        new Grid(0, 5);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testGrid_Constructor_HeightZero_ShouldThrow() {
+        new Grid(5, 0);
+    }
+
+    @Test
+    public void testPoint_NegativeCoordinates_RoundTrip() {
+        long p = Point.toPoint(-7, -9);
+        assertEquals(-7, Point.getX(p));
+        assertEquals(-9, Point.getY(p));
+    }
+
+    @Test
+    public void testAStar_Open_Unwalkable_ShouldNoOp() {
+        Grid grid = new Grid(4, 4);
+        AStar astar = new AStar();
+        astar.nodes.map = grid;
+        grid.setWalkable(1, 1, false);
+        astar.open(1, 1, 5, Grid.DIRECTION_UP, 3, 3, grid);
+        assertEquals(0, grid.info(1, 1));
+    }
+
+    @Test
+    public void testAStar_Open_EqualG_NoUpdate() {
+        Grid grid = new Grid(6, 6);
+        AStar astar = new AStar();
+        astar.nodes.map = grid;
+
+        astar.open(2, 2, 10, Grid.DIRECTION_UP, 5, 5, grid);
+        int idx = Grid.openNodeIdx(grid.info(2, 2));
+        long n0 = astar.nodes.getOpenNode(idx);
+        assertEquals(10, Node.getG(n0));
+        assertEquals(Grid.DIRECTION_UP, grid.nodeParentDirection(2, 2));
+
+        astar.open(2, 2, 10, Grid.DIRECTION_LEFT, 5, 5, grid);
+        long n1 = astar.nodes.getOpenNode(idx);
+        assertEquals(10, Node.getG(n1));
+        assertEquals(Grid.DIRECTION_UP, grid.nodeParentDirection(2, 2));
+    }
+
+    @Test
+    public void testAStar_Search_SmoothVsRaw_PathLength() {
+        Grid grid = new Grid(8, 8);
+        AStar astar = new AStar();
+        Path raw = astar.search(0, 0, 7, 6, grid, false);
+        Path smooth = astar.search(0, 0, 7, 6, grid, true);
+        assertFalse(raw.isEmpty());
+        assertFalse(smooth.isEmpty());
+        assertTrue(smooth.size() <= raw.size());
+    }
+
+    @Test
+    public void testAStar_Search_TooManyOpenNodes_ShouldClearPathAndThrow() {
+        Grid grid = new Grid(5, 5);
+        AStar astar = new AStar();
+        Path path = new Path();
+        astar.nodes.size = Grid.MAX_OPEN_NODE_SIZE;
+        try {
+            astar.search(0, 0, 4, 4, grid, path, false);
+            fail("should throw TooLongPathException");
+        } catch (TooLongPathException e) {
+            assertTrue(path.isEmpty());
+            assertTrue(astar.isCLean(grid));
+        }
+    }
+
+    @Test
+    public void testAStar_FillPath_WithParentDirections_NoSmooth() {
+        Grid grid = new Grid(5, 5);
+        AStar astar = new AStar();
+        Path path = new Path();
+        grid.nodeParentDirectionUpdate(2, 1, Grid.DIRECTION_LEFT);
+        grid.nodeParentDirectionUpdate(1, 1, Grid.DIRECTION_LEFT);
+        grid.nodeParentDirectionUpdate(0, 1, Grid.DIRECTION_DOWN);
+
+        astar.fillPath(2, 1, 0, 0, path, grid, false);
+        assertEquals(3, path.size());
+        assertEquals(0, Point.getX(path.get(2)));
+        assertEquals(0, Point.getY(path.get(2)));
+        assertEquals(0, Point.getX(path.get(1)));
+        assertEquals(1, Point.getY(path.get(1)));
+        assertEquals(2, Point.getX(path.get(0)));
+        assertEquals(1, Point.getY(path.get(0)));
+    }
+
+    @Test
+    public void testAStar_FillPath_WithParentDirections_Smooth() {
+        Grid grid = new Grid(5, 5);
+        AStar astar = new AStar();
+        Path path = new Path();
+        grid.nodeParentDirectionUpdate(2, 1, Grid.DIRECTION_LEFT);
+        grid.nodeParentDirectionUpdate(1, 1, Grid.DIRECTION_LEFT);
+        grid.nodeParentDirectionUpdate(0, 1, Grid.DIRECTION_DOWN);
+
+        astar.fillPath(2, 1, 0, 0, path, grid, true);
+        assertEquals(2, path.size());
+        assertEquals(0, Point.getX(path.get(1)));
+        assertEquals(0, Point.getY(path.get(1)));
+        assertEquals(2, Point.getX(path.get(0)));
+        assertEquals(1, Point.getY(path.get(0)));
+    }
+
+    @Test
+    public void testReachability_Diagonal_NegativeSlope_NoObstacle() {
+        Grid g = new Grid(10, 10);
+        assertTrue(Reachability.isReachable(0, 2, 2, 0, g));
+        assertEquals(Point.toPoint(2, 0), Reachability.getClosestWalkablePointToTarget(0, 2, 2, 0, g));
+    }
+
+    @Test
+    public void testReachability_WithScaleGreaterThanOne() {
+        Grid g = new Grid(20, 20);
+        long p = Reachability.getClosestWalkablePointToTarget(1, 1, 7, 9, 2, g);
+        assertEquals(Point.toPoint(7, 9), p);
+        assertTrue(Reachability.isReachable(1, 1, 7, 9, 2, g));
+    }
+
+    @Test
+    public void testNodes_CloseMultiple_NonDecreasingF() {
+        Grid grid = new Grid(10, 10);
+        Nodes nodes = new Nodes();
+        nodes.map = grid;
+
+        nodes.open(0, 0, 5, 5, Grid.DIRECTION_UP);
+        nodes.open(1, 0, 3, 8, Grid.DIRECTION_UP);
+        nodes.open(2, 0, 1, 2, Grid.DIRECTION_UP);
+        nodes.open(3, 0, 6, 1, Grid.DIRECTION_UP);
+        nodes.open(4, 0, 4, 4, Grid.DIRECTION_UP);
+        nodes.open(5, 0, 7, 7, Grid.DIRECTION_UP);
+        nodes.open(6, 0, 2, 2, Grid.DIRECTION_UP);
+
+        int lastF = Integer.MIN_VALUE;
+        while (true) {
+            long n = nodes.close();
+            if (n == 0) break;
+            int f = Node.getF(n);
+            assertTrue(f >= lastF);
+            lastF = f;
+        }
+        assertTrue(nodes.isClean());
+    }
+
+    @Test
+    public void testAStar_Search_Unreachable_ShouldReturnEmptyAndClean() {
+        Grid grid = new Grid(3, 3);
+        AStar astar = new AStar();
+        grid.setWalkable(0, 1, false);
+        grid.setWalkable(1, 0, false);
+        grid.setWalkable(1, 1, false);
+        Path p = astar.search(0, 0, 2, 2, grid);
+        assertTrue(p.isEmpty());
+        assertTrue(astar.isCLean(grid));
+    }
+
+    @Test
+    public void testReachability_Horizontal_NoObstacle_ReturnEnd() {
+        Grid g = new Grid(10, 3);
+        long p = Reachability.getClosestWalkablePointToTarget(0, 1, 5, 1, g);
+        assertEquals(Point.toPoint(5, 1), p);
+    }
+
+    @Test
+    public void testReachability_Vertical_NoObstacle_ReturnEnd() {
+        Grid g = new Grid(3, 10);
+        long p = Reachability.getClosestWalkablePointToTarget(1, 0, 1, 5, g);
+        assertEquals(Point.toPoint(1, 5), p);
+    }
+
+    @Test
+    public void testUtils_CheckFalse_NoMsg() {
+        try {
+            Utils.check(false);
+            fail("should throw");
+        } catch (RuntimeException e) {
+            assertNull(e.getMessage());
+        }
+    }
 }
