@@ -673,4 +673,229 @@ public class AllInOneTest {
             assertNull(e.getMessage());
         }
     }
+
+    // ============== AStar.open 成功路径补充 ==============
+
+    @Test
+    public void testAStar_Open_RightDown_Success() {
+        Grid grid = new Grid(6, 6);
+        AStar astar = new AStar();
+        astar.nodes.map = grid;
+        // 邻接点(x+1,y)可走，且目标格本身可走
+        astar.open(2, 2, 5, Grid.DIRECTION_RIGHT_DOWN, 4, 4, grid);
+        // 已写入开放索引，且父方向为RIGHT_DOWN
+        assertTrue((grid.info(2, 2) & Grid.NODE_MASK) != 0);
+        assertEquals(Grid.DIRECTION_RIGHT_DOWN, grid.nodeParentDirection(2, 2));
+    }
+
+    @Test
+    public void testAStar_Open_LeftUp_Success() {
+        Grid grid = new Grid(6, 6);
+        AStar astar = new AStar();
+        astar.nodes.map = grid;
+        astar.open(2, 2, 5, Grid.DIRECTION_LEFT_UP, 4, 4, grid);
+        assertTrue((grid.info(2, 2) & Grid.NODE_MASK) != 0);
+        assertEquals(Grid.DIRECTION_LEFT_UP, grid.nodeParentDirection(2, 2));
+    }
+
+    // ============== AStar.fillPath 单步八方向覆盖 ==============
+
+    @Test
+    public void testFillPath_Step_UP() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        g.nodeParentDirectionUpdate(2, 2, Grid.DIRECTION_UP);
+        a.fillPath(2, 2, 2, 3, p, g, false);
+        assertEquals(2, p.size());
+        assertEquals(2, Point.getX(p.get(1)));
+        assertEquals(2, Point.getY(p.get(1))); // 终点
+        assertEquals(2, Point.getX(p.get(0)));
+        assertEquals(3, Point.getY(p.get(0))); // 起点
+    }
+
+    @Test
+    public void testFillPath_Step_DOWN() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        g.nodeParentDirectionUpdate(2, 2, Grid.DIRECTION_DOWN);
+        a.fillPath(2, 2, 2, 1, p, g, false);
+        assertEquals(2, p.size());
+        assertEquals(2, Point.getX(p.get(1)));
+        assertEquals(2, Point.getY(p.get(1)));
+        assertEquals(2, Point.getX(p.get(0)));
+        assertEquals(1, Point.getY(p.get(0)));
+    }
+
+    @Test
+    public void testFillPath_Step_LEFT() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        g.nodeParentDirectionUpdate(2, 2, Grid.DIRECTION_LEFT);
+        a.fillPath(2, 2, 1, 2, p, g, false);
+        assertEquals(2, p.size());
+        assertEquals(2, Point.getX(p.get(1)));
+        assertEquals(2, Point.getY(p.get(1)));
+        assertEquals(1, Point.getX(p.get(0)));
+        assertEquals(2, Point.getY(p.get(0)));
+    }
+
+    @Test
+    public void testFillPath_Step_RIGHT() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        g.nodeParentDirectionUpdate(2, 2, Grid.DIRECTION_RIGHT);
+        a.fillPath(2, 2, 3, 2, p, g, false);
+        assertEquals(2, p.size());
+        assertEquals(2, Point.getX(p.get(1)));
+        assertEquals(2, Point.getY(p.get(1)));
+        assertEquals(3, Point.getX(p.get(0)));
+        assertEquals(2, Point.getY(p.get(0)));
+    }
+
+    @Test
+    public void testFillPath_Step_LEFT_UP() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        g.nodeParentDirectionUpdate(2, 2, Grid.DIRECTION_LEFT_UP);
+        a.fillPath(2, 2, 1, 3, p, g, false);
+        assertEquals(2, p.size());
+        assertEquals(2, Point.getX(p.get(1)));
+        assertEquals(2, Point.getY(p.get(1)));
+        assertEquals(1, Point.getX(p.get(0)));
+        assertEquals(3, Point.getY(p.get(0)));
+    }
+
+    @Test
+    public void testFillPath_Step_LEFT_DOWN() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        g.nodeParentDirectionUpdate(2, 2, Grid.DIRECTION_LEFT_DOWN);
+        a.fillPath(2, 2, 1, 1, p, g, false);
+        assertEquals(2, p.size());
+        assertEquals(2, Point.getX(p.get(1)));
+        assertEquals(2, Point.getY(p.get(1)));
+        assertEquals(1, Point.getX(p.get(0)));
+        assertEquals(1, Point.getY(p.get(0)));
+    }
+
+    @Test
+    public void testFillPath_Step_RIGHT_UP() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        g.nodeParentDirectionUpdate(2, 2, Grid.DIRECTION_RIGHT_UP);
+        a.fillPath(2, 2, 3, 3, p, g, false);
+        assertEquals(2, p.size());
+        assertEquals(2, Point.getX(p.get(1)));
+        assertEquals(2, Point.getY(p.get(1)));
+        assertEquals(3, Point.getX(p.get(0)));
+        assertEquals(3, Point.getY(p.get(0)));
+    }
+
+    @Test
+    public void testFillPath_Step_RIGHT_DOWN() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        g.nodeParentDirectionUpdate(2, 2, Grid.DIRECTION_RIGHT_DOWN);
+        a.fillPath(2, 2, 3, 1, p, g, false);
+        assertEquals(2, p.size());
+        assertEquals(2, Point.getX(p.get(1)));
+        assertEquals(2, Point.getY(p.get(1)));
+        assertEquals(3, Point.getX(p.get(0)));
+        assertEquals(1, Point.getY(p.get(0)));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testFillPath_IllegalDirection_ShouldThrow() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        // 设置非法方向 8
+        g.nodeParentDirectionUpdate(2, 2, 8);
+        a.fillPath(2, 2, 2, 3, p, g, false);
+    }
+
+    // ============== Path/Nodes 扩容分支补充 ==============
+
+    @Test
+    public void testPath_GrowBeyond64Capacity() {
+        Path path = new Path();
+        // 插入大量点触发多次扩容，覆盖oldCapacity>=64分支
+        for (int i = 0; i < 80; i++) {
+            path.add(i, i);
+        }
+        assertEquals(80, path.size());
+        // 末尾反向读取验证
+        assertEquals(79, Point.getX(path.get(0)));
+        assertEquals(79, Point.getY(path.get(0)));
+    }
+
+    @Test
+    public void testNodes_GrowBeyond64Capacity() {
+        Grid grid = new Grid(200, 2);
+        Nodes nodes = new Nodes();
+        nodes.map = grid;
+        for (int i = 0; i < 130; i++) {
+            nodes.open(i, 1, i % 10, (i % 7), Grid.DIRECTION_UP);
+        }
+        assertTrue(nodes.nodes.length >= 130);
+        // 关闭多个节点确保堆性质
+        int lastF = Integer.MIN_VALUE;
+        while (true) {
+            long n = nodes.close();
+            if (n == 0) break;
+            int f = Node.getF(n);
+            assertTrue(f >= lastF);
+            lastF = f;
+        }
+    }
+
+    // ============== Reachability fence 初始可达一次调用 ==============
+
+    private static class CountingFence implements Fence {
+        int calls;
+        boolean initialResult = true;
+        @Override
+        public boolean isReachable(int x1, int y1, int x2, int y2) {
+            calls++;
+            return initialResult;
+        }
+    }
+
+    @Test
+    public void testReachability_FenceSetNullAfterInitialTrue() {
+        Grid g = new Grid(5, 5);
+        CountingFence fence = new CountingFence();
+        long p = Reachability.getClosestWalkablePointToTarget(1, 1, 1, 1, 1, g, fence);
+        assertEquals(Point.toPoint(1, 1), p);
+        // 仅调用一次（初始判定后置空，后续分支不再调用）
+        assertEquals(1, fence.calls);
+    }
+
+    // ============== AStar.fillPath 平滑多步移除 ==============
+
+    @Test
+    public void testFillPath_Smooth_RemoveMultipleIntermediate() {
+        Grid g = new Grid(10, 10);
+        AStar a = new AStar();
+        Path p = new Path();
+        // 构造一条对角直线，一次次填充后平滑应收敛到首尾两点
+        p.add(0, 0);
+        p.add(1, 1);
+        p.add(2, 2);
+        p.add(3, 3);
+        a.fillPath(4, 4, p, g, true);
+        assertEquals(2, p.size());
+        assertEquals(4, Point.getX(p.get(0)));
+        assertEquals(4, Point.getY(p.get(0)));
+        assertEquals(0, Point.getX(p.get(1)));
+        assertEquals(0, Point.getY(p.get(1)));
+    }
 }
