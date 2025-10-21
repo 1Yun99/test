@@ -1072,4 +1072,54 @@ public class AllInOneTest {
         // 应返回到阻断前的格子（y=1）
         assertEquals(Point.toPoint(1, 1), p);
     }
+
+    @Test
+    public void testAStar_Search_FromCornerToCorner_WithObstaclesComplex() {
+        // 中文：构造复杂障碍，迫使A*多次尝试八方向，仍应找到路径
+        Grid g = new Grid(8, 8);
+        // 阻断部分直线，留出通道
+        for (int x = 1; x < 7; x++) {
+            if (x != 3) g.setWalkable(x, 1, false);
+        }
+        for (int y = 2; y < 7; y++) {
+            if (y != 4) g.setWalkable(6, y, false);
+        }
+        // 对角附近阻断，迫使转折
+        g.setWalkable(4, 3, false);
+        g.setWalkable(3, 4, false);
+
+        AStar a = new AStar();
+        Path p = a.search(0, 7, 7, 0, g, true);
+        assertFalse(p.isEmpty());
+        assertTrue(a.isCLean(g));
+    }
+
+    @Test
+    public void testNodes_Close_AllAndThenZero() {
+        Grid grid = new Grid(10, 10);
+        Nodes nodes = new Nodes();
+        nodes.map = grid;
+        // 打开若干节点
+        for (int i = 0; i < 5; i++) {
+            nodes.open(i, i, i, 10 - i, Grid.DIRECTION_UP);
+        }
+        // 逐个关闭
+        for (int i = 0; i < 5; i++) {
+            long n = nodes.close();
+            assertNotEquals(0, n);
+        }
+        // 再次关闭应返回0
+        assertEquals(0, nodes.close());
+        assertTrue(nodes.isClean());
+    }
+
+    @Test
+    public void testGrid_OpenNodeIdx_BoundaryZero() {
+        Grid g = new Grid(3, 3);
+        g.openNodeIdxUpdate(0, 0, 0);
+        int info = g.info(0, 0);
+        // 存储为idx+1=1，恢复应为0
+        assertEquals(1, (info & Grid.NODE_MASK));
+        assertEquals(0, Grid.openNodeIdx(info));
+    }
 }
