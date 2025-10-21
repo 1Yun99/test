@@ -165,9 +165,9 @@ public class AllInOneTest {
         // 更新开放节点索引
         g.openNodeIdxUpdate(1, 1, 5);
         int info = g.info(1, 1);
-        // 取出索引（传入idx=5，内部存储的是idx+1=6，因此openNodeIdx需要-1恢复）
+        // 取出索引（传入idx=5，内部存储的是idx+1=6，因此openNodeIdx需要-1恢复为5）
         assertEquals(6, (info & Grid.NODE_MASK));
-        assertEquals(4, Grid.openNodeIdx(info));
+        assertEquals(5, Grid.openNodeIdx(info));
 
         // 关闭节点
         g.nodeClosed(1, 1);
@@ -1009,5 +1009,67 @@ public class AllInOneTest {
         } catch (TooLongPathException e) {
             assertTrue(e.getMessage().contains("TooBigF"));
         }
+    }
+
+    @Test
+    public void testReachability_Diagonal_NegativeSlope_ImmediateBlocked_ReturnStart() {
+        // 中文：负斜率第一步进入(1,1)被阻断，返回上一个检查点（起点）
+        Grid g = new Grid(10, 10);
+        g.setWalkable(1, 1, false);
+        long p = Reachability.getClosestWalkablePointToTarget(0, 2, 2, 0, g);
+        assertEquals(Point.toPoint(0, 2), p);
+    }
+
+    @Test
+    public void testGrid_NodeParentDirection_AllValues_AndNullClosedFlags() {
+        Grid g = new Grid(3, 3);
+        // 初始为空节点且未关闭
+        assertTrue(Grid.isNullNode(g.info(1, 1)));
+        assertFalse(Grid.isClosedNode(g.info(1, 1)));
+        // 8 个方向写入与读取
+        for (int d = 0; d <= 7; d++) {
+            g.nodeParentDirectionUpdate(1, 1, d);
+            assertEquals(d, g.nodeParentDirection(1, 1));
+        }
+    }
+
+    @Test
+    public void testNodes_SiftDown_ChildCountVariants() {
+        // 中文：构造不同规模以覆盖siftDown中0/1/2/3/4个子节点的分支
+        int[] sizes = {2, 3, 4, 5, 6};
+        for (int size : sizes) {
+            Grid grid = new Grid(50, 2);
+            Nodes nodes = new Nodes();
+            nodes.map = grid;
+            for (int i = 0; i < size; i++) {
+                // f = g+h 变化，制造一些顺序
+                nodes.open(i, 1, i % 7, (i * 3) % 11, Grid.DIRECTION_UP);
+            }
+            long r = nodes.close();
+            // 关闭一个节点后结构仍然有效
+            if (size > 1) {
+                assertTrue(r != 0);
+            } else {
+                assertEquals(0, r);
+            }
+        }
+    }
+
+    @Test
+    public void testReachability_Horizontal_WithFence_ImmediateBlock_ReturnStart() {
+        Grid g = new Grid(10, 3);
+        Fence fence = (x1, y1, x2, y2) -> x2 == x1 && y2 == y1; // 仅允许原地
+        long p = Reachability.getClosestWalkablePointToTarget(0, 1, 5, 1, 1, g, fence);
+        assertEquals(Point.toPoint(0, 1), p);
+    }
+
+    @Test
+    public void testReachability_Vertical_WithFence_LaterBlock_ReturnPrevCell() {
+        Grid g = new Grid(3, 10);
+        // 当目标y到达2时阻断
+        Fence fence = (x1, y1, x2, y2) -> !(x2 == x1 && y2 == 2);
+        long p = Reachability.getClosestWalkablePointToTarget(1, 0, 1, 5, 1, g, fence);
+        // 应返回到阻断前的格子（y=1）
+        assertEquals(Point.toPoint(1, 1), p);
     }
 }
