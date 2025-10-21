@@ -898,4 +898,31 @@ public class AllInOneTest {
         assertEquals(0, Point.getX(p.get(1)));
         assertEquals(0, Point.getY(p.get(1)));
     }
+
+    @Test
+    public void testReachability_Fence_Blocking_MultipleChecks() {
+        Grid g = new Grid(10, 10);
+        // 始终阻断，期望多次调用Fence（至少>1次）
+        CountingFence fence = new CountingFence();
+        fence.initialResult = false;
+        long p = Reachability.getClosestWalkablePointToTarget(0, 0, 9, 9, 1, g, fence);
+        assertNotEquals(Point.toPoint(9, 9), p);
+        assertTrue(fence.calls > 1);
+    }
+
+    @Test
+    public void testGrid_Getters() {
+        Grid g = new Grid(7, 8);
+        assertEquals(7, g.getWidth());
+        assertEquals(8, g.getHeight());
+    }
+
+    @Test
+    public void testReachability_StepX_PositiveSlope_ExactCorner() {
+        // 中文：|dx|>|dy| 且斜率>0，路径穿越格子交点时无需额外检查
+        Grid g = new Grid(10, 10);
+        long p = Reachability.getClosestWalkablePointToTarget(0, 0, 4, 2, g);
+        assertEquals(Point.toPoint(4, 2), p);
+        assertTrue(Reachability.isReachable(0, 0, 4, 2, g));
+    }
 }
