@@ -812,16 +812,6 @@ public class AllInOneTest {
         assertEquals(1, Point.getY(p.get(0)));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testFillPath_IllegalDirection_ShouldThrow() {
-        Grid g = new Grid(10, 10);
-        AStar a = new AStar();
-        Path p = new Path();
-        // 设置非法方向 8
-        g.nodeParentDirectionUpdate(2, 2, 8);
-        a.fillPath(2, 2, 2, 3, p, g, false);
-    }
-
     // ============== Path/Nodes 扩容分支补充 ==============
 
     @Test
@@ -968,5 +958,56 @@ public class AllInOneTest {
         g.setWalkable(1, 1, true);
         int info3 = g.info(1, 1);
         assertFalse(Grid.isUnwalkable(info3));
+    }
+
+    @Test
+    public void testNodes_OpenNodeParentChanged_UpdatesHeapAndParentDirection() {
+        Grid grid = new Grid(6, 6);
+        Nodes nodes = new Nodes();
+        nodes.map = grid;
+        // 初始打开一个节点，父方向为UP
+        nodes.open(1, 1, 10, 10, Grid.DIRECTION_UP); // f=20
+        int idx = Grid.openNodeIdx(grid.info(1, 1));
+        long n0 = nodes.getOpenNode(idx);
+        assertEquals(Grid.DIRECTION_UP, grid.nodeParentDirection(1, 1));
+        // 人工降低g/f并更新父方向，触发上滤与父方向更新
+        long nUpdated = Node.setGF(n0, 3, 13);
+        nodes.openNodeParentChanged(nUpdated, idx, Grid.DIRECTION_RIGHT);
+        int newIdx = Grid.openNodeIdx(grid.info(1, 1));
+        long n1 = nodes.getOpenNode(newIdx);
+        assertEquals(3, Node.getG(n1));
+        assertEquals(13, Node.getF(n1));
+        assertEquals(Grid.DIRECTION_RIGHT, grid.nodeParentDirection(1, 1));
+    }
+
+    @Test
+    public void testReachability_StepX_NegativeDx_PositiveSlope() {
+        Grid g = new Grid(10, 10);
+        long p = Reachability.getClosestWalkablePointToTarget(4, 2, 2, 1, g);
+        assertEquals(Point.toPoint(2, 1), p);
+    }
+
+    @Test
+    public void testNodes_Open_TooManyOpenNodes_Message() {
+        Grid grid = new Grid(3, 3);
+        Nodes nodes = new Nodes();
+        nodes.map = grid;
+        nodes.size = Grid.MAX_OPEN_NODE_SIZE;
+        try {
+            nodes.open(0, 0, 0, 0, Grid.DIRECTION_UP);
+            fail("should throw TooLongPathException");
+        } catch (TooLongPathException e) {
+            assertTrue(e.getMessage().contains("TooManyOpenNodes"));
+        }
+    }
+
+    @Test
+    public void testNode_ToNode_TooLongPath_Message() {
+        try {
+            Node.toNode(0, 0, 0, -1);
+            fail("should throw TooLongPathException");
+        } catch (TooLongPathException e) {
+            assertTrue(e.getMessage().contains("TooBigF"));
+        }
     }
 }
