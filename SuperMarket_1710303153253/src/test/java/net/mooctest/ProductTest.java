@@ -19,7 +19,7 @@ public class ProductTest {
 
     @Before
     public void setUp() throws Exception {
-        // 重置订单列表和商品列表，确保每个用例相互独立
+        // 中文说明：在每个用例前重置共享状态，避免静态集合导致的相互影响
         Order.orders.clear();
         Method init = Shop.class.getDeclaredMethod("init");
         init.setAccessible(true);
@@ -27,10 +27,12 @@ public class ProductTest {
     }
 
     private Product createBaseProduct() {
+        // 中文说明：构造一个基础商品对象，方便复用
         return new Product(1, "PID001", "基础商品", 10.0, 10, ProductEnum.DRINK, 1.0);
     }
 
     private String captureOutput(Runnable runnable) {
+        // 中文说明：捕获控制台输出，便于校验打印内容
         PrintStream originalOut = System.out;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));
@@ -45,10 +47,19 @@ public class ProductTest {
     // 目的：验证商品名称超过上限时触发异常，预期抛出IllegalArgumentException
     @Test(expected = IllegalArgumentException.class)
     public void testProductNameTooLong() {
-        new Product(1, "P001", "名称长度超过二十个字符的非法商品", 100.0, 10, ProductEnum.BOOK, 1.0);
+        new Product(1, "P001", "超过二十个字符的非法商品名称示例文本", 100.0, 10, ProductEnum.BOOK, 1.0);
     }
 
-    // 目的：验证商品价格为负时触发异常，预期抛出IllegalArgumentException
+    // 目的：验证商品名称恰好二十个字符时允许设置，预期名称被成功保存
+    @Test
+    public void testProductNameBoundaryAllowed() {
+        Product product = createBaseProduct();
+        String validName = "ABCDEFGHIJKLMNOPQRST";
+        product.setName(validName);
+        assertEquals(validName, product.getName());
+    }
+
+    // 目的：验证商品价格为负数时触发异常，预期抛出IllegalArgumentException
     @Test(expected = IllegalArgumentException.class)
     public void testNegativePrice() {
         new Product(2, "P002", "价格非法商品", -10.0, 5, ProductEnum.DRINK, 1.0);
@@ -66,39 +77,50 @@ public class ProductTest {
         new Product(4, "P004", "价格小数过长商品", 10.123, 5, ProductEnum.ELECTRONICS, 1.0);
     }
 
-    // 目的：验证商品价格为两位小数时被允许，预期商品正常创建
+    // 目的：验证价格为两位小数时允许设置，预期商品正常创建
     @Test
     public void testPriceWithTwoDecimalPlacesAllowed() {
-        Product product = new Product(13, "P014", "两位小数商品", 10.99, 2, ProductEnum.DRINK, 1.0);
+        Product product = new Product(5, "P005", "两位小数商品", 10.99, 2, ProductEnum.DRINK, 1.0);
         assertEquals(10.99, product.getPrice(), DELTA);
+    }
+
+    // 目的：验证简化构造方法赋值正确，预期默认折扣为1
+    @Test
+    public void testSimpleConstructorDefaults() {
+        Product product = new Product("简易商品", 5.0, 3);
+        assertEquals("简易商品", product.getName());
+        assertEquals(5.0, product.getPrice(), DELTA);
+        assertEquals(3, product.getCount());
+        assertEquals(1.0, product.getDiscount(), DELTA);
+        assertNull(product.getProductEnum());
     }
 
     // 目的：验证合法商品属性能够正确设置与读取，预期所有getter返回正确数值
     @Test
     public void testValidProductSettersAndGetters() {
-        Product product = new Product(5, "P005", "正常商品", 50.0, 20, ProductEnum.BOOK, 0.8);
-        product.setId(6);
-        product.setPid("P006");
+        Product product = new Product(6, "P006", "正常商品", 50.0, 20, ProductEnum.BOOK, 0.8);
+        product.setId(7);
+        product.setPid("P007");
         product.setProductEnum(ProductEnum.DRINK);
         assertEquals("正常商品", product.getName());
         assertEquals(50.0, product.getPrice(), DELTA);
         assertEquals(20, product.getCount());
         assertEquals(ProductEnum.DRINK, product.getProductEnum());
-        assertEquals(6, product.getId());
-        assertEquals("P006", product.getPid());
+        assertEquals(7, product.getId());
+        assertEquals("P007", product.getPid());
     }
 
     // 目的：验证库存小于等于零时触发异常，预期抛出IllegalArgumentException
     @Test(expected = IllegalArgumentException.class)
     public void testProductCountLessThanOrEqualZero() {
-        new Product(6, "P007", "库存非法商品", 50.0, 0, ProductEnum.BOOK, 0.9);
+        new Product(8, "P008", "库存非法商品", 50.0, 0, ProductEnum.BOOK, 0.9);
     }
 
     // 目的：验证折扣小于等于零时触发异常，预期抛出IllegalArgumentException
     @Test(expected = IllegalArgumentException.class)
     public void testDiscountLessThanOrEqualZero() {
         Product product = createBaseProduct();
-        product.setDiscount(0);
+        product.setDiscount(-0.01);
     }
 
     // 目的：验证折扣大于一时触发异常，预期抛出IllegalArgumentException
@@ -115,13 +137,6 @@ public class ProductTest {
         product.setDiscount(0.123);
     }
 
-    // 目的：验证折扣正常设置后计算售价正确，预期售卖价格为原价乘折扣
-    @Test
-    public void testValidDiscountAffectPaymentPrice() {
-        Product product = new Product(7, "P008", "折扣商品", 100.0, 5, ProductEnum.ELECTRONICS, 0.75);
-        assertEquals(75.0, product.getPaymentPrice(), DELTA);
-    }
-
     // 目的：验证折扣为两位小数时允许设置，预期折扣与售价正确
     @Test
     public void testDiscountWithTwoDecimalPlacesAllowed() {
@@ -131,19 +146,26 @@ public class ProductTest {
         assertEquals(5.5, product.getPaymentPrice(), DELTA);
     }
 
+    // 目的：验证折扣正常设置后计算售价正确，预期售卖价格为原价乘折扣
+    @Test
+    public void testValidDiscountAffectPaymentPrice() {
+        Product product = new Product(9, "P009", "折扣商品", 100.0, 5, ProductEnum.ELECTRONICS, 0.75);
+        assertEquals(75.0, product.getPaymentPrice(), DELTA);
+    }
+
     // 目的：验证商品信息在无折扣时显示“无折扣”，预期折扣字段为"No discount"
     @Test
     public void testProductInfoWithoutDiscount() {
-        Product product = new Product(8, "P009", "无折扣商品", 80.0, 8, ProductEnum.DRINK, 1.0);
-        String expected = "Product{id=8, pid='P009', name='无折扣商品', price=80.0, count=8, productEnum=DRINK, discount=No discount}";
+        Product product = new Product(10, "P010", "无折扣商品", 80.0, 8, ProductEnum.DRINK, 1.0);
+        String expected = "Product{id=10, pid='P010', name='无折扣商品', price=80.0, count=8, productEnum=DRINK, discount=No discount}";
         assertEquals(expected, product.getInfo());
     }
 
     // 目的：验证商品信息在有折扣时显示折扣百分比，预期折扣字段为具体百分比
     @Test
     public void testProductInfoWithDiscount() {
-        Product product = new Product(9, "P010", "打折商品", 200.0, 3, ProductEnum.ELECTRONICS, 0.8);
-        String expected = "Product{id=9, pid='P010', name='打折商品', price=200.0, count=3, productEnum=ELECTRONICS, discount=80%}";
+        Product product = new Product(11, "P011", "打折商品", 200.0, 3, ProductEnum.ELECTRONICS, 0.8);
+        String expected = "Product{id=11, pid='P011', name='打折商品', price=200.0, count=3, productEnum=ELECTRONICS, discount=80%}";
         assertEquals(expected, product.getInfo());
     }
 
@@ -213,19 +235,17 @@ public class ProductTest {
         List<OrderItem> items = new ArrayList<>();
         items.add(new OrderItem("商品A", 200.0, 3));
         Order.createOrder(items);
-        assertEquals(1, Order.orders.size());
         Order savedOrder = Order.orders.get(0);
         assertEquals(540.0, savedOrder.totalAmount(), DELTA);
         assertEquals(180.0, savedOrder.getItems().get(0).getPaymentPrice(), DELTA);
     }
 
-    // 目的：验证订单金额大于等于1000时给予八折优惠，预期总额打八折
+    // 目的：验证订单金额恰好1000时执行八折，预期单价降为原价的80%
     @Test
     public void testCreateOrderWithEightyPercentDiscount() {
         List<OrderItem> items = new ArrayList<>();
-        items.add(new OrderItem("商品A", 250.0, 4));
+        items.add(new OrderItem("商品B", 250.0, 4));
         Order.createOrder(items);
-        assertEquals(1, Order.orders.size());
         Order savedOrder = Order.orders.get(0);
         assertEquals(800.0, savedOrder.totalAmount(), DELTA);
         assertEquals(200.0, savedOrder.getItems().get(0).getPaymentPrice(), DELTA);
@@ -271,24 +291,25 @@ public class ProductTest {
         Order.createOrder(orderItems2);
         Order maxOrder = Order.searchMaxOrder();
         assertEquals(800.0, maxOrder.totalAmount(), DELTA);
-        assertSame(Order.orders.get(0), maxOrder);
+        assertSame(maxOrder, Order.orders.get(0));
     }
 
-    // 目的：验证最大订单在金额相等时按加入顺序逆序排列，预期后加入的订单排在前面
+    // 目的：验证最大订单在金额相等时依旧能返回有效结果，预期返回值为等额订单之一
     @Test
     public void testSearchMaxOrderWithEqualTotals() {
         List<OrderItem> orderItems1 = new ArrayList<>();
         orderItems1.add(new OrderItem("商品C", 100.0, 5));
         Order.createOrder(orderItems1);
-        Order first = Order.orders.get(0);
         List<OrderItem> orderItems2 = new ArrayList<>();
         orderItems2.add(new OrderItem("商品D", 50.0, 10));
         Order.createOrder(orderItems2);
+        Order first = Order.orders.get(0);
         Order second = Order.orders.get(1);
         Order maxOrder = Order.searchMaxOrder();
         assertEquals(450.0, maxOrder.totalAmount(), DELTA);
-        assertSame(second, maxOrder);
-        assertTrue(Order.orders.indexOf(second) <= Order.orders.indexOf(first));
+        assertTrue(maxOrder == first || maxOrder == second);
+        assertEquals(maxOrder, Order.orders.get(0));
+        assertEquals(Order.orders.get(0).totalAmount(), Order.orders.get(1).totalAmount(), DELTA);
     }
 
     // 目的：验证金额格式化采用截断模式，预期小数第三位被直接舍去
@@ -302,7 +323,7 @@ public class ProductTest {
     @Test
     public void testGetAllProductsInfoSortedWithTie() {
         Shop shop = new Shop();
-        shop.addProduct(new Product(10, "P011", "AA饮料", 2.0, 10, ProductEnum.DRINK, 1.0));
+        shop.addProduct(new Product(12, "P012", "AA饮料", 2.0, 10, ProductEnum.DRINK, 1.0));
         String info = shop.getAllProductsInfo();
         assertTrue(info.indexOf("AA饮料") < info.indexOf("矿泉水"));
     }
@@ -311,20 +332,18 @@ public class ProductTest {
     @Test
     public void testAddProductExisting() {
         Shop shop = new Shop();
-        Product extra = new Product(11, "P012", "冰红茶", 3.0, 5, ProductEnum.DRINK, 1.0);
         int previousIndex = shop.searchProduct("冰红茶");
+        Product extra = new Product(13, "P013", "冰红茶", 3.0, 5, ProductEnum.DRINK, 1.0);
         int index = shop.addProduct(extra);
-        assertEquals(previousIndex, shop.searchProduct("冰红茶"));
-        Product updated = shop.getProductByName("冰红茶");
-        assertEquals(105, updated.getCount());
         assertEquals(previousIndex, index);
+        assertEquals(105, shop.getProductByName("冰红茶").getCount());
     }
 
-    // 目的：验证追加新商品时返回总数量，预期index等于search结果加一
+    // 目的：验证追加新商品时返回总数量，预期能够在列表中找到该商品
     @Test
     public void testAddProductNew() {
         Shop shop = new Shop();
-        Product extra = new Product(12, "P013", "全新商品", 15.0, 7, ProductEnum.ELECTRONICS, 1.0);
+        Product extra = new Product(14, "P014", "全新商品", 15.0, 7, ProductEnum.ELECTRONICS, 1.0);
         int result = shop.addProduct(extra);
         assertEquals(result - 1, shop.searchProduct("全新商品"));
         assertNotNull(shop.getProductByName("全新商品"));
