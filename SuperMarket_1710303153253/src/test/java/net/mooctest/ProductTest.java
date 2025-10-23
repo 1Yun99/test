@@ -66,6 +66,13 @@ public class ProductTest {
         new Product(4, "P004", "价格小数过长商品", 10.123, 5, ProductEnum.ELECTRONICS, 1.0);
     }
 
+    // 目的：验证商品价格为两位小数时被允许，预期商品正常创建
+    @Test
+    public void testPriceWithTwoDecimalPlacesAllowed() {
+        Product product = new Product(13, "P014", "两位小数商品", 10.99, 2, ProductEnum.DRINK, 1.0);
+        assertEquals(10.99, product.getPrice(), DELTA);
+    }
+
     // 目的：验证合法商品属性能够正确设置与读取，预期所有getter返回正确数值
     @Test
     public void testValidProductSettersAndGetters() {
@@ -115,6 +122,15 @@ public class ProductTest {
         assertEquals(75.0, product.getPaymentPrice(), DELTA);
     }
 
+    // 目的：验证折扣为两位小数时允许设置，预期折扣与售价正确
+    @Test
+    public void testDiscountWithTwoDecimalPlacesAllowed() {
+        Product product = createBaseProduct();
+        product.setDiscount(0.55);
+        assertEquals(0.55, product.getDiscount(), DELTA);
+        assertEquals(5.5, product.getPaymentPrice(), DELTA);
+    }
+
     // 目的：验证商品信息在无折扣时显示“无折扣”，预期折扣字段为"No discount"
     @Test
     public void testProductInfoWithoutDiscount() {
@@ -162,6 +178,13 @@ public class ProductTest {
         assertEquals(70.0, order.totalAmount(), DELTA);
     }
 
+    // 目的：验证订单项为空时总金额为零，预期返回0
+    @Test
+    public void testOrderTotalAmountEmpty() {
+        Order order = new Order(new ArrayList<OrderItem>());
+        assertEquals(0.0, order.totalAmount(), DELTA);
+    }
+
     // 目的：验证订单金额不足500时不打折，预期订单金额保持原值
     @Test
     public void testCreateOrderWithoutDiscount() {
@@ -171,6 +194,17 @@ public class ProductTest {
         assertEquals(1, Order.orders.size());
         assertEquals(200.0, Order.orders.get(0).totalAmount(), DELTA);
         assertEquals(100.0, Order.orders.get(0).getItems().get(0).getPaymentPrice(), DELTA);
+    }
+
+    // 目的：验证订单金额恰好500时执行九折，预期单价降为原价的90%
+    @Test
+    public void testCreateOrderBoundaryFiveHundred() {
+        List<OrderItem> items = new ArrayList<>();
+        items.add(new OrderItem("商品C", 100.0, 5));
+        Order.createOrder(items);
+        Order savedOrder = Order.orders.get(0);
+        assertEquals(450.0, savedOrder.totalAmount(), DELTA);
+        assertEquals(90.0, savedOrder.getItems().get(0).getPaymentPrice(), DELTA);
     }
 
     // 目的：验证订单金额位于500到1000之间时给予九折优惠，预期总额打九折
@@ -197,6 +231,17 @@ public class ProductTest {
         assertEquals(200.0, savedOrder.getItems().get(0).getPaymentPrice(), DELTA);
     }
 
+    // 目的：验证订单金额超过1000时仍执行八折，预期单价降为原价的80%
+    @Test
+    public void testCreateOrderGreaterThanOneThousand() {
+        List<OrderItem> items = new ArrayList<>();
+        items.add(new OrderItem("商品D", 400.0, 3));
+        Order.createOrder(items);
+        Order savedOrder = Order.orders.get(0);
+        assertEquals(960.0, savedOrder.totalAmount(), DELTA);
+        assertEquals(320.0, savedOrder.getItems().get(0).getPaymentPrice(), DELTA);
+    }
+
     // 目的：验证订单打印信息包含每张订单与总金额，预期输出含有关键字段
     @Test
     public void testPrintOrdersOutput() {
@@ -209,6 +254,8 @@ public class ProductTest {
         String output = captureOutput(Order::printOrders);
         assertTrue(output.contains("Order No.1"));
         assertTrue(output.contains("Order No.2"));
+        assertTrue(output.contains("商品A\t100.00\t2\t200.00"));
+        assertTrue(output.contains("商品B\t400.00\t2\t800.00"));
         assertTrue(output.contains("Order Total:"));
         assertTrue(output.contains("AllAmount: 1000.00"));
     }
@@ -225,6 +272,23 @@ public class ProductTest {
         Order maxOrder = Order.searchMaxOrder();
         assertEquals(800.0, maxOrder.totalAmount(), DELTA);
         assertSame(Order.orders.get(0), maxOrder);
+    }
+
+    // 目的：验证最大订单在金额相等时按加入顺序逆序排列，预期后加入的订单排在前面
+    @Test
+    public void testSearchMaxOrderWithEqualTotals() {
+        List<OrderItem> orderItems1 = new ArrayList<>();
+        orderItems1.add(new OrderItem("商品C", 100.0, 5));
+        Order.createOrder(orderItems1);
+        Order first = Order.orders.get(0);
+        List<OrderItem> orderItems2 = new ArrayList<>();
+        orderItems2.add(new OrderItem("商品D", 50.0, 10));
+        Order.createOrder(orderItems2);
+        Order second = Order.orders.get(1);
+        Order maxOrder = Order.searchMaxOrder();
+        assertEquals(450.0, maxOrder.totalAmount(), DELTA);
+        assertSame(second, maxOrder);
+        assertTrue(Order.orders.indexOf(second) <= Order.orders.indexOf(first));
     }
 
     // 目的：验证金额格式化采用截断模式，预期小数第三位被直接舍去

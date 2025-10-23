@@ -1,0 +1,18 @@
+# Build outputs
+/target/
+/bin/
+/out/
+
+# IDE settings
+/.idea/
+/.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Generated files
+*.class
+*.log
+
+# OS artifacts
+.DS_Store
