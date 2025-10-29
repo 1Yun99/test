@@ -349,6 +349,36 @@ public class GraphTest {
         assertEquals(Arrays.asList(start, mid, end), result.getPath());
     }
 
+    // 测试Dijkstra算法在发现更短路径时会更新距离
+    @Test
+    public void testDijkstraUpdatesShorterDistance() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node midPriority = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node midAlternative = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(midPriority);
+        graph.addNode(midAlternative);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 5.0);
+        graph.addEdge(1, 3, 1.0);
+        graph.addEdge(3, 2, 1.0);
+        graph.addEdge(2, 4, 1.0);
+        graph.addEdge(3, 4, 10.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 1000, false, 80.0, 80.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        Dijkstra dijkstra = new Dijkstra(graph, start, end, vehicle, trafficCondition, weatherCondition, 0, new HashMap<Integer, GasStation>());
+        PathResult result = dijkstra.findPath();
+
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, midAlternative, midPriority, end), result.getPath());
+    }
+
     // 测试A*算法的启发式函数与过滤路径逻辑
     @Test
     public void testAStarHeuristicAndPathSelection() {
@@ -412,6 +442,24 @@ public class GraphTest {
         PathResult result = aStar.findPath();
         assertNotNull(result);
         assertEquals(Arrays.asList(start, risky, end), result.getPath());
+    }
+
+    // 测试A*算法在燃料不足时跳过邻居节点
+    @Test
+    public void testAStarSkipsNeighborDueToFuelConstraint() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(end);
+        graph.addEdge(1, 2, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 10.0, 1.0, 1.0, 0.5, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        assertNull(aStar.findPath());
     }
 
     // 测试A*算法在路径受限时返回空结果
@@ -715,6 +763,25 @@ public class GraphTest {
         assertNull(result);
         assertFalse(visited.contains(node1));
         assertTrue(visited.contains(node2));
+    }
+
+    // 测试迭代加深搜索在深度为零且节点不同时时返回空
+    @Test
+    public void testIterativeDeepeningSearchDepthZeroNoMatch() {
+        Graph graph = new Graph();
+        Node node1 = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node node2 = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(node1);
+        graph.addNode(node2);
+        node1.addNeighbor(node2, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 1000, false, 100.0, 50.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        IterativeDeepeningSearch ids = new IterativeDeepeningSearch(graph, node1, node2, vehicle, trafficCondition, weatherCondition, 0, 1);
+        PathResult result = ids.depthLimitedSearch(node1, node2, 0, new HashSet<Node>());
+        assertNull(result);
     }
 
     // 测试路径结果对象的打印输出
