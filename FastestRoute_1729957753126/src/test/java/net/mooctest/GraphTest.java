@@ -93,6 +93,19 @@ public class GraphTest {
         assertNull(graph.getNode(99));
     }
 
+    // 测试图在起点缺失时不应创建边
+    @Test
+    public void testGraphAddEdgeWithMissingFromNode() {
+        Graph graph = new Graph();
+        Node destination = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(destination);
+
+        graph.addEdge(99, 2, 4.0);
+        assertTrue(destination.getNeighbors().isEmpty());
+        assertNull(graph.getNode(99));
+        assertEquals(1, graph.getNodes().size());
+    }
+
     // 测试图对象提供节点视图的完整性
     @Test
     public void testGraphNodeRegistryExposure() {
@@ -129,6 +142,18 @@ public class GraphTest {
         assertEquals(5.0, trafficCondition.adjustWeight(5.0, 1), 1e-6);
     }
 
+    // 测试交通状况的默认分支保持原始权重
+    @Test
+    public void testTrafficConditionUnknownStatusKeepsWeight() {
+        Map<Integer, String> trafficMap = new HashMap<>();
+        trafficMap.put(1, "Moderate");
+        TrafficCondition trafficCondition = new TrafficCondition(trafficMap);
+
+        assertEquals(8.0, trafficCondition.adjustWeight(8.0, 1), 1e-6);
+        trafficCondition.updateTrafficStatus(1, "Clear");
+        assertEquals("Clear", trafficCondition.getTrafficStatus(1));
+    }
+
     // 测试天气因素对权重的影响分支
     @Test
     public void testWeatherConditionAdjustments() {
@@ -153,6 +178,7 @@ public class GraphTest {
         assertTrue(vehicle.needsRefueling(1.0));
         vehicle.refuel(100.0);
         assertEquals(60.0, vehicle.getCurrentFuel(), 1e-6);
+        assertFalse(vehicle.needsRefueling(27.5));
     }
 
     // 测试加油站加油与费用输出
@@ -362,6 +388,30 @@ public class GraphTest {
         PathResult result = aStar.findPath();
         assertNotNull(result);
         assertEquals(Arrays.asList(start, node2, end), result.getPath());
+    }
+
+    // 测试应急车辆在A*算法中忽略限制
+    @Test
+    public void testAStarEmergencyVehicleIgnoresRestrictions() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node risky = node(2, false, "Highway", false, false, true, 1.0, 5, 10);
+        Node end = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(risky);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 3, 1.0);
+
+        Vehicle emergencyVehicle = new Vehicle("Ambulance", 1000, false, 50.0, 50.0, 1.0, 0.0, true);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, emergencyVehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, risky, end), result.getPath());
     }
 
     // 测试A*算法在路径受限时返回空结果
@@ -641,6 +691,30 @@ public class GraphTest {
         PathResult zeroDepthResult = ids.depthLimitedSearch(node3, node3, 0, new HashSet<Node>());
         assertNotNull(zeroDepthResult);
         assertEquals(Collections.singletonList(node3), zeroDepthResult.getPath());
+    }
+
+    // 测试迭代加深搜索在已访问集合的剪枝行为
+    @Test
+    public void testIterativeDeepeningSearchVisitedPreventsRevisit() {
+        Graph graph = new Graph();
+        Node node1 = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node node2 = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(node1);
+        graph.addNode(node2);
+        node1.addNeighbor(node2, 1.0);
+        node2.addNeighbor(node1, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 1000, false, 100.0, 50.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        IterativeDeepeningSearch ids = new IterativeDeepeningSearch(graph, node1, node2, vehicle, trafficCondition, weatherCondition, 0, 2);
+        Set<Node> visited = new HashSet<>();
+        visited.add(node2);
+        PathResult result = ids.depthLimitedSearch(node1, node2, 1, visited);
+        assertNull(result);
+        assertFalse(visited.contains(node1));
+        assertTrue(visited.contains(node2));
     }
 
     // 测试路径结果对象的打印输出
