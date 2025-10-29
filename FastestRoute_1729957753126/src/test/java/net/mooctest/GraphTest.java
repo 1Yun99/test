@@ -40,6 +40,22 @@ public class GraphTest {
         assertFalse(origin.isHighRiskArea());
     }
 
+    // 测试节点属性读取和障碍过滤逻辑
+    @Test
+    public void testNodeAttributesAndObstacleFiltering() {
+        Node tollNode = node(10, false, "Toll Road", true, true, true, 2.5, 8, 20);
+        Node blocked = node(11, true, "Regular Road", false, false, false, 1.0, 0, 24);
+        tollNode.addNeighbor(blocked, 6.0);
+
+        assertEquals(0, tollNode.getNeighbors().size());
+        assertTrue(tollNode.isTollRoad());
+        assertTrue(tollNode.isRestrictedForHeavyVehicles());
+        assertTrue(tollNode.isHighRiskArea());
+        assertEquals(2.5, tollNode.getCostPerKm(), 1e-6);
+        assertTrue(tollNode.isOpenAt(10));
+        assertFalse(tollNode.isOpenAt(22));
+    }
+
     // 测试边与路径节点的数据封装可靠性
     @Test
     public void testEdgeAndPathNodeConstructors() {
@@ -75,6 +91,20 @@ public class GraphTest {
         graph.addEdge(1, 99, 3.0);
         assertEquals(1, node1.getNeighbors().size());
         assertNull(graph.getNode(99));
+    }
+
+    // 测试图对象提供节点视图的完整性
+    @Test
+    public void testGraphNodeRegistryExposure() {
+        Graph graph = new Graph();
+        Node node1 = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node node2 = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(node1);
+        graph.addNode(node2);
+
+        assertSame(node1, graph.getNode(1));
+        assertSame(node2, graph.getNodes().get(2));
+        assertEquals(2, graph.getNodes().size());
     }
 
     // 测试交通状况对路径权重的动态调整
@@ -144,6 +174,19 @@ public class GraphTest {
         String output = outputStream.toString();
         assertTrue(output.contains("Refueled 20.0 litres"));
         assertTrue(output.contains("node 3"));
+    }
+
+    // 测试加油站属性读取与油量上限
+    @Test
+    public void testGasStationGetterAndCapacityLimit() {
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 40.0, 35.0, 1.0, 5.0, false);
+        GasStation gasStation = new GasStation(8, 6.0);
+
+        assertEquals(8, gasStation.getNodeId());
+        assertEquals(6.0, gasStation.getFuelCostPerLitre(), 1e-6);
+
+        gasStation.refuel(vehicle, 10.0);
+        assertEquals(40.0, vehicle.getCurrentFuel(), 1e-6);
     }
 
     // 测试路径优化器对搜索算法的委托
@@ -237,6 +280,47 @@ public class GraphTest {
 
         assertNotNull(result);
         assertEquals(Arrays.asList(start, risky), result.getPath());
+    }
+
+    // 测试Dijkstra算法在缺乏加油站时的失败分支
+    @Test
+    public void testDijkstraFailsWhenFuelInsufficientAndNoStation() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(end);
+        graph.addEdge(1, 2, 5.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 1000, false, 20.0, 2.0, 2.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        Dijkstra dijkstra = new Dijkstra(graph, start, end, vehicle, trafficCondition, weatherCondition, 0, new HashMap<Integer, GasStation>());
+        assertNull(dijkstra.findPath());
+    }
+
+    // 测试Dijkstra路径重建工具方法
+    @Test
+    public void testDijkstraReconstructPathUtility() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node mid = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(mid);
+        graph.addNode(end);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 50.0, 20.0, 1.0, 0.0, false);
+        TrafficCondition traffic = new TrafficCondition(new HashMap<>());
+        WeatherCondition weather = new WeatherCondition("Clear");
+
+        Dijkstra dijkstra = new Dijkstra(graph, start, end, vehicle, traffic, weather, 0, new HashMap<Integer, GasStation>());
+        Map<Node, Node> predecessors = new HashMap<>();
+        predecessors.put(end, mid);
+        predecessors.put(mid, start);
+        PathResult result = dijkstra.reconstructPath(predecessors);
+        assertEquals(Arrays.asList(start, mid, end), result.getPath());
     }
 
     // 测试A*算法的启发式函数与过滤路径逻辑
@@ -464,6 +548,29 @@ public class GraphTest {
         PathResult result = shortestTimeFirst.findPath();
         assertNotNull(result);
         assertEquals(Arrays.asList(start, node2, end), result.getPath());
+    }
+
+    // 测试ShortestTimeFirst算法的路径重建方法
+    @Test
+    public void testShortestTimeFirstReconstructPathUtility() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node mid = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(mid);
+        graph.addNode(end);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 1000, false, 100.0, 50.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        ShortestTimeFirst shortestTimeFirst = new ShortestTimeFirst(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        Map<Node, Node> predecessors = new HashMap<>();
+        predecessors.put(end, mid);
+        predecessors.put(mid, start);
+        PathResult result = shortestTimeFirst.reconstructPath(predecessors);
+        assertEquals(Arrays.asList(start, mid, end), result.getPath());
     }
 
     // 测试ShortestTimeFirst算法在全部路径受限时的返回
