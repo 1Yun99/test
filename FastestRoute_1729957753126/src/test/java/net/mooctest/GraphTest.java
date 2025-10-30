@@ -965,6 +965,30 @@ public class GraphTest {
         assertEquals(2.0, shortestTimeFirst.calculateTravelTime(gravelEdge, vehicle), 1e-6);
     }
 
+    // 测试WeatherCondition未知天气时保持原始权重
+    @Test
+    public void testWeatherConditionKeepsWeightForUnknown() {
+        Node sample = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        assertEquals(12.5, new WeatherCondition("Foggy").adjustWeightForWeather(12.5, sample), 1e-6);
+    }
+
+    // 测试Dijkstra在道路关闭且无其他路径时返回空
+    @Test
+    public void testDijkstraStopsAtClosedRoadForNonEmergency() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node closed = node(2, false, "Regular Road", false, false, false, 1.0, 10, 20);
+        graph.addNode(start);
+        graph.addNode(closed);
+        graph.addEdge(1, 2, 5.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 1000, false, 50.0, 50.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+        Dijkstra dijkstra = new Dijkstra(graph, start, closed, vehicle, trafficCondition, weatherCondition, 0, new HashMap<Integer, GasStation>());
+        assertNull(dijkstra.findPath());
+    }
+
     // 测试Bellman-Ford在不可达目的地时的返回
     @Test
     public void testBellmanFordUnreachableDestination() {
