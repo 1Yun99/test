@@ -747,6 +747,29 @@ public class GraphTest {
         assertEquals(Collections.singletonList(single), result.getPath());
     }
 
+    // 测试A*算法对紧急车辆忽略封闭时间
+    @Test
+    public void testAStarEmergencyBypassesClosedSchedule() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node closed = node(2, false, "Regular Road", false, false, false, 1.0, 6, 10);
+        Node end = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(closed);
+        graph.addNode(end);
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 3, 1.0);
+
+        Vehicle emergency = new Vehicle("Ambulance", 800, false, 80.0, 80.0, 1.0, 0.0, true);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, emergency, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, closed, end), result.getPath());
+    }
+
     // 测试A*算法在延迟开放的道路上仍然找到路径
     @Test
     public void testAStarHonorsAccumulatedVisitTime() {
@@ -774,6 +797,33 @@ public class GraphTest {
         PathResult result = aStar.findPath();
         assertNotNull(result);
         assertEquals(Arrays.asList(start, via, late, end), result.getPath());
+    }
+
+    // 测试Bellman-Ford算法避开交通封闭的路径
+    @Test
+    public void testBellmanFordAvoidsClosedEdges() {
+        Graph graph = new Graph();
+        Node node1 = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node node2 = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node node3 = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(node1);
+        graph.addNode(node2);
+        graph.addNode(node3);
+
+        graph.addEdge(1, 2, 2.0);
+        graph.addEdge(2, 3, 2.0);
+        graph.addEdge(1, 3, 10.0);
+
+        Map<Integer, String> trafficMap = new HashMap<>();
+        trafficMap.put(2, "Closed");
+        TrafficCondition trafficCondition = new TrafficCondition(trafficMap);
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 20.0, 10.0, 1.0, 0.0, false);
+
+        BellmanFord bellmanFord = new BellmanFord(graph, node1, node3, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = bellmanFord.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(node1, node3), result.getPath());
     }
 
     // 测试Bellman-Ford算法的最短路径输出
