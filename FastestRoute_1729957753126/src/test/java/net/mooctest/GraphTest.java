@@ -799,6 +799,34 @@ public class GraphTest {
         assertEquals(Arrays.asList(start, via, late, end), result.getPath());
     }
 
+    // 测试A*算法在紧急车辆下允许高风险路径
+    @Test
+    public void testAStarEmergencyUsesHighRiskRoute() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node highRisk = node(2, false, "Regular Road", false, false, true, 1.0, 0, 24);
+        Node detour = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(highRisk);
+        graph.addNode(detour);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 4, 1.0);
+        graph.addEdge(1, 3, 5.0);
+        graph.addEdge(3, 4, 5.0);
+
+        Vehicle emergency = new Vehicle("Ambulance", 900, false, 90.0, 90.0, 1.0, 0.0, true);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, emergency, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, highRisk, end), result.getPath());
+    }
+
     // 测试Bellman-Ford算法避开交通封闭的路径
     @Test
     public void testBellmanFordAvoidsClosedEdges() {
