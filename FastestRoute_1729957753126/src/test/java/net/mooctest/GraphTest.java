@@ -66,6 +66,19 @@ public class GraphTest {
         assertFalse(boundary.isOpenAt(19));
     }
 
+    // 测试节点障碍标记对访问器的影响
+    @Test
+    public void testNodeObstacleFlagAccessor() {
+        Node obstacleNode = node(12, true, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node normalNode = node(13, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        assertTrue(obstacleNode.isObstacle());
+        assertFalse(normalNode.isObstacle());
+
+        obstacleNode.addNeighbor(normalNode, 3.0);
+        assertEquals(1, obstacleNode.getNeighbors().size());
+        assertSame(normalNode, obstacleNode.getNeighbors().get(0).getNeighbor());
+    }
+
     // 测试边与路径节点的数据封装可靠性
     @Test
     public void testEdgeAndPathNodeConstructors() {
@@ -270,6 +283,26 @@ public class GraphTest {
         assertEquals(Arrays.asList(start, end), result.getPath());
     }
 
+    // 测试路径优化器在搜索失败时的行为
+    @Test
+    public void testRouteOptimizerHandlesNullResult() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(end);
+
+        SearchAlgorithm algorithm = new SearchAlgorithm(graph, start, end, null, null, null, 0) {
+            @Override
+            public PathResult findPath() {
+                return null;
+            }
+        };
+
+        RouteOptimizer optimizer = new RouteOptimizer(algorithm);
+        assertNull(optimizer.optimizeRoute());
+    }
+
     // 测试Dijkstra算法在复杂约束下的路径搜索
     @Test
     public void testDijkstraHandlesConstraintsAndGasStations() {
@@ -313,6 +346,62 @@ public class GraphTest {
         assertEquals(100.0, vehicle.getCurrentFuel(), 1e-6);
         assertFalse(result.getPath().contains(node3));
         assertFalse(result.getPath().contains(node4));
+    }
+
+    // 测试Dijkstra算法避免更短但危险的路径
+    @Test
+    public void testDijkstraAvoidsShorterHighRiskRoute() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node risky = node(2, false, "Regular Road", false, false, true, 1.0, 0, 24);
+        Node safe = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(risky);
+        graph.addNode(safe);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 4, 1.0);
+        graph.addEdge(1, 3, 2.5);
+        graph.addEdge(3, 4, 2.5);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 60.0, 60.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        Dijkstra dijkstra = new Dijkstra(graph, start, end, vehicle, trafficCondition, weatherCondition, 0, new HashMap<Integer, GasStation>());
+        PathResult result = dijkstra.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, safe, end), result.getPath());
+    }
+
+    // 测试Dijkstra算法在关闭道路存在备选路径时的选择
+    @Test
+    public void testDijkstraPrefersOpenRoadOverClosedShortcut() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node closed = node(2, false, "Regular Road", false, false, false, 1.0, 10, 20);
+        Node safe = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(closed);
+        graph.addNode(safe);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 4, 1.0);
+        graph.addEdge(1, 3, 3.0);
+        graph.addEdge(3, 4, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 800, false, 80.0, 80.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        Dijkstra dijkstra = new Dijkstra(graph, start, end, vehicle, trafficCondition, weatherCondition, 0, new HashMap<Integer, GasStation>());
+        PathResult result = dijkstra.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, safe, end), result.getPath());
     }
 
     // 测试应急车辆在Dijkstra算法中的优先通行
@@ -489,6 +578,62 @@ public class GraphTest {
         PathResult result = aStar.findPath();
         assertNotNull(result);
         assertEquals(Arrays.asList(start, risky, end), result.getPath());
+    }
+
+    // 测试A*算法避免高风险捷径
+    @Test
+    public void testAStarAvoidsHighRiskShortcut() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node risky = node(2, false, "Regular Road", false, false, true, 1.0, 0, 24);
+        Node safe = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(risky);
+        graph.addNode(safe);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 4, 1.0);
+        graph.addEdge(1, 3, 2.0);
+        graph.addEdge(3, 4, 2.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 600, false, 80.0, 80.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, safe, end), result.getPath());
+    }
+
+    // 测试A*算法在关闭道路存在备选路径时的选择
+    @Test
+    public void testAStarPrefersOpenRouteOverClosedShortcut() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node closed = node(2, false, "Regular Road", false, false, false, 1.0, 12, 18);
+        Node safe = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(closed);
+        graph.addNode(safe);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 4, 2.0);
+        graph.addEdge(1, 3, 3.0);
+        graph.addEdge(3, 4, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 600, false, 80.0, 80.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, safe, end), result.getPath());
     }
 
     // 测试A*算法在燃料不足时跳过邻居节点
