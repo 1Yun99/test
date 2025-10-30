@@ -827,6 +827,34 @@ public class GraphTest {
         assertEquals(Arrays.asList(start, highRisk, end), result.getPath());
     }
 
+    // 测试A*算法保持首次最优前驱
+    @Test
+    public void testAStarMaintainsBestPredecessorOnEqualCost() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node preferred = node(50, false, "Highway", false, false, false, 1.0, 0, 24);
+        Node alternative = node(55, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(100, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(preferred);
+        graph.addNode(alternative);
+        graph.addNode(end);
+
+        graph.addEdge(1, 50, 1.0);
+        graph.addEdge(1, 55, 1.0);
+        graph.addEdge(50, 100, 1.0);
+        graph.addEdge(55, 100, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 600, false, 60.0, 60.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, preferred, end), result.getPath());
+    }
+
     // 测试Bellman-Ford算法避开交通封闭的路径
     @Test
     public void testBellmanFordAvoidsClosedEdges() {
