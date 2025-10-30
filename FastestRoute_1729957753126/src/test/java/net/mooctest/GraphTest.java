@@ -918,6 +918,38 @@ public class GraphTest {
         assertNull(shortestTimeFirst.findPath());
     }
 
+    // 测试ShortestTimeFirst在已有更优路径时保持结果
+    @Test
+    public void testShortestTimeFirstMaintainsBestTime() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node mid = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node via = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(mid);
+        graph.addNode(via);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 80.0); // 较长直达路径
+        graph.addEdge(1, 3, 10.0); // 更快的中转路径
+        graph.addEdge(3, 2, 20.0); // 首次改进
+        graph.addEdge(3, 2, 5.0);  // 最优改进
+        graph.addEdge(3, 2, 50.0); // 后续更差路径应被忽略
+        graph.addEdge(2, 4, 10.0);
+
+        Map<Integer, String> trafficMap = new HashMap<>();
+        trafficMap.put(3, "Accident"); // 增加时间权重
+        TrafficCondition trafficCondition = new TrafficCondition(trafficMap);
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 900, false, 90.0, 90.0, 1.0, 0.0, false);
+
+        ShortestTimeFirst shortestTimeFirst = new ShortestTimeFirst(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = shortestTimeFirst.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, via, mid, end), result.getPath());
+    }
+
     // 测试ShortestTimeFirst算法能跳过关闭道路
     @Test
     public void testShortestTimeFirstSkipsClosedNeighbor() {
