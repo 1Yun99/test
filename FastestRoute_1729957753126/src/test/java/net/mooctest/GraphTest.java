@@ -730,6 +730,52 @@ public class GraphTest {
         assertNull(aStar.findPath());
     }
 
+    // 测试A*算法在起点即终点时的快速返回
+    @Test
+    public void testAStarReturnsWhenStartIsEnd() {
+        Graph graph = new Graph();
+        Node single = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(single);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 20.0, 10.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, single, single, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Collections.singletonList(single), result.getPath());
+    }
+
+    // 测试A*算法在延迟开放的道路上仍然找到路径
+    @Test
+    public void testAStarHonorsAccumulatedVisitTime() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node via = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node late = node(3, false, "Regular Road", false, false, false, 1.0, 5, 10);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(via);
+        graph.addNode(late);
+        graph.addNode(end);
+
+        // 先添加直达但即时关闭的路径，迫使算法等待
+        graph.addEdge(1, 3, 1.0);
+        graph.addEdge(1, 2, 6.0);
+        graph.addEdge(2, 3, 1.0);
+        graph.addEdge(3, 4, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 800, false, 100.0, 100.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, via, late, end), result.getPath());
+    }
+
     // 测试Bellman-Ford算法的最短路径输出
     @Test
     public void testBellmanFordFindsShortestPath() {
