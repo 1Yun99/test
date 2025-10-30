@@ -56,6 +56,16 @@ public class GraphTest {
         assertFalse(tollNode.isOpenAt(22));
     }
 
+    // 测试节点开放时间边界条件
+    @Test
+    public void testNodeOpenTimeBoundary() {
+        Node boundary = node(20, false, "Regular Road", false, false, false, 1.0, 6, 18);
+        assertTrue(boundary.isOpenAt(6));
+        assertTrue(boundary.isOpenAt(18));
+        assertFalse(boundary.isOpenAt(5));
+        assertFalse(boundary.isOpenAt(19));
+    }
+
     // 测试边与路径节点的数据封装可靠性
     @Test
     public void testEdgeAndPathNodeConstructors() {
@@ -181,6 +191,14 @@ public class GraphTest {
         assertFalse(vehicle.needsRefueling(27.5));
     }
 
+    // 测试车辆在燃料恰好等于阈值时无需加油
+    @Test
+    public void testVehicleNeedsRefuelingAtThreshold() {
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 60.0, 10.0, 1.0, 4.0, false);
+        assertFalse(vehicle.needsRefueling(6.0));
+        assertTrue(vehicle.needsRefueling(6.1));
+    }
+
     // 测试加油站加油与费用输出
     @Test
     public void testGasStationRefuelBehavior() {
@@ -202,17 +220,26 @@ public class GraphTest {
         assertTrue(output.contains("node 3"));
     }
 
-    // 测试加油站属性读取与油量上限
+    // 测试加油站输出费用详情
     @Test
-    public void testGasStationGetterAndCapacityLimit() {
-        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 40.0, 35.0, 1.0, 5.0, false);
-        GasStation gasStation = new GasStation(8, 6.0);
+    public void testGasStationRefuelCostMessage() {
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 800, false, 70.0, 25.0, 1.0, 5.0, false);
+        GasStation gasStation = new GasStation(9, 5.5);
 
-        assertEquals(8, gasStation.getNodeId());
-        assertEquals(6.0, gasStation.getFuelCostPerLitre(), 1e-6);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(outputStream));
+        try {
+            gasStation.refuel(vehicle, 15.0);
+        } finally {
+            System.setOut(originalOut);
+        }
 
-        gasStation.refuel(vehicle, 10.0);
         assertEquals(40.0, vehicle.getCurrentFuel(), 1e-6);
+        String message = outputStream.toString();
+        assertTrue(message.contains("Refueled 15.0 litres"));
+        assertTrue(message.contains("node 9"));
+        assertTrue(message.contains("82.5"));
     }
 
     // 测试路径优化器对搜索算法的委托
@@ -284,6 +311,8 @@ public class GraphTest {
         assertNotNull(result);
         assertEquals(Arrays.asList(start, node2, node5), result.getPath());
         assertEquals(100.0, vehicle.getCurrentFuel(), 1e-6);
+        assertFalse(result.getPath().contains(node3));
+        assertFalse(result.getPath().contains(node4));
     }
 
     // 测试应急车辆在Dijkstra算法中的优先通行
@@ -347,6 +376,23 @@ public class GraphTest {
         predecessors.put(mid, start);
         PathResult result = dijkstra.reconstructPath(predecessors);
         assertEquals(Arrays.asList(start, mid, end), result.getPath());
+    }
+
+    // 测试Dijkstra算法起点即终点时的返回结果
+    @Test
+    public void testDijkstraWhenAlreadyAtDestination() {
+        Graph graph = new Graph();
+        Node single = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(single);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 200, false, 30.0, 30.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        Dijkstra dijkstra = new Dijkstra(graph, single, single, vehicle, trafficCondition, weatherCondition, 0, new HashMap<Integer, GasStation>());
+        PathResult result = dijkstra.findPath();
+        assertNotNull(result);
+        assertEquals(Collections.singletonList(single), result.getPath());
     }
 
     // 测试Dijkstra算法在发现更短路径时会更新距离
@@ -418,6 +464,7 @@ public class GraphTest {
         PathResult result = aStar.findPath();
         assertNotNull(result);
         assertEquals(Arrays.asList(start, node2, end), result.getPath());
+        assertFalse(result.getPath().contains(risky));
     }
 
     // 测试应急车辆在A*算法中忽略限制
@@ -646,6 +693,29 @@ public class GraphTest {
         PathResult result = shortestTimeFirst.findPath();
         assertNotNull(result);
         assertEquals(Arrays.asList(start, node2, end), result.getPath());
+    }
+
+    // 测试ShortestTimeFirst算法能跳过关闭道路
+    @Test
+    public void testShortestTimeFirstSkipsClosedNeighbor() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node closed = node(2, false, "Regular Road", false, false, false, 1.0, 0, 5);
+        Node end = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(closed);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 600.0);
+        graph.addEdge(2, 3, 10.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 800, false, 100.0, 50.0, 1.0, 0.0, false);
+        Map<Integer, String> trafficMap = new HashMap<>();
+        TrafficCondition trafficCondition = new TrafficCondition(trafficMap);
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        ShortestTimeFirst shortestTimeFirst = new ShortestTimeFirst(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        assertNull(shortestTimeFirst.findPath());
     }
 
     // 测试ShortestTimeFirst算法的路径重建方法
