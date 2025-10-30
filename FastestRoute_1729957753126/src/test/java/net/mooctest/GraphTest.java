@@ -96,6 +96,35 @@ public class GraphTest {
         assertEquals(4.0, pathNode2.getEstimatedTotalDistance(), 1e-6);
     }
 
+    // 测试图中存在更长路径时Dijkstra不会更新距离
+    @Test
+    public void testDijkstraRetainsExistingShorterDistance() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node fast = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node detour = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(fast);
+        graph.addNode(detour);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 2.0);
+        graph.addEdge(1, 3, 3.0);
+        graph.addEdge(2, 4, 2.0);
+        graph.addEdge(3, 4, 10.0);
+        graph.addEdge(3, 2, 5.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 80.0, 80.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        Dijkstra dijkstra = new Dijkstra(graph, start, end, vehicle, trafficCondition, weatherCondition, 0, new HashMap<Integer, GasStation>());
+        PathResult result = dijkstra.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, fast, end), result.getPath());
+    }
+
     // 测试图结构的节点注册与边添加能力
     @Test
     public void testGraphAddNodeAndEdge() {
@@ -654,6 +683,35 @@ public class GraphTest {
         assertNull(aStar.findPath());
     }
 
+    // 测试A*算法不会使用更差的G值更新节点
+    @Test
+    public void testAStarRejectsHigherGScoreUpdate() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node direct = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node detour = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(4, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(direct);
+        graph.addNode(detour);
+        graph.addNode(end);
+
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 4, 1.0);
+        graph.addEdge(1, 3, 2.0);
+        graph.addEdge(3, 2, 5.0);
+        graph.addEdge(3, 4, 5.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 600, false, 80.0, 80.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        AStar aStar = new AStar(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = aStar.findPath();
+        assertNotNull(result);
+        assertEquals(Arrays.asList(start, direct, end), result.getPath());
+    }
+
     // 测试A*算法在路径受限时返回空结果
     @Test
     public void testAStarReturnsNullWhenAllPathsFiltered() {
@@ -838,6 +896,26 @@ public class GraphTest {
         PathResult result = shortestTimeFirst.findPath();
         assertNotNull(result);
         assertEquals(Arrays.asList(start, node2, end), result.getPath());
+    }
+
+    // 测试ShortestTimeFirst在交通关闭情况下忽略路径
+    @Test
+    public void testShortestTimeFirstSkipsClosedByTraffic() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node blocked = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(blocked);
+        graph.addEdge(1, 2, 20.0);
+
+        Map<Integer, String> trafficMap = new HashMap<>();
+        trafficMap.put(2, "Closed");
+        TrafficCondition trafficCondition = new TrafficCondition(trafficMap);
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 800, false, 80.0, 80.0, 1.0, 0.0, false);
+
+        ShortestTimeFirst shortestTimeFirst = new ShortestTimeFirst(graph, start, blocked, vehicle, trafficCondition, weatherCondition, 0);
+        assertNull(shortestTimeFirst.findPath());
     }
 
     // 测试ShortestTimeFirst算法能跳过关闭道路
