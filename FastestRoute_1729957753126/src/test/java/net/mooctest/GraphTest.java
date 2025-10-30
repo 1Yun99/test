@@ -854,6 +854,26 @@ public class GraphTest {
         assertNull(result);
     }
 
+    // 测试迭代加深搜索在无可行路径时返回空
+    @Test
+    public void testIterativeDeepeningSearchNoPathFound() {
+        Graph graph = new Graph();
+        Node node1 = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node node2 = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node isolated = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(node1);
+        graph.addNode(node2);
+        graph.addNode(isolated);
+        node1.addNeighbor(node2, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 1000, false, 100.0, 50.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        IterativeDeepeningSearch ids = new IterativeDeepeningSearch(graph, node1, isolated, vehicle, trafficCondition, weatherCondition, 0, 4);
+        assertNull(ids.findPath());
+    }
+
     // 测试路径结果对象的打印输出
     @Test
     public void testPathResultPrintsCorrectly() {
@@ -875,5 +895,92 @@ public class GraphTest {
         }
 
         assertEquals("1 -> 2 -> End\n", outputStream.toString());
+    }
+
+    // 测试图在缺失目标节点时不会添加边
+    @Test
+    public void testGraphAddEdgeWithMissingToNode() {
+        Graph graph = new Graph();
+        Node from = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(from);
+
+        graph.addEdge(1, 5, 4.0);
+        assertTrue(from.getNeighbors().isEmpty());
+        assertNull(graph.getNode(5));
+    }
+
+    // 测试车辆各项属性访问器
+    @Test
+    public void testVehicleGetterCoverage() {
+        Vehicle emergencyVehicle = new Vehicle("Fire Truck", 2000, false, 120.0, 80.0, 3.0, 10.0, true);
+        assertEquals(120.0, emergencyVehicle.getFuelCapacity(), 1e-6);
+        assertEquals(80.0, emergencyVehicle.getCurrentFuel(), 1e-6);
+        assertEquals(3.0, emergencyVehicle.getFuelConsumptionPerKm(), 1e-6);
+        assertEquals(10.0, emergencyVehicle.getMinFuelAtEnd(), 1e-6);
+        assertFalse(emergencyVehicle.requiresTollFreeRoute());
+        assertTrue(emergencyVehicle.isEmergencyVehicle());
+    }
+
+    // 测试A*路径重建工具方法
+    @Test
+    public void testAStarReconstructPathUtility() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node mid = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(3, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(mid);
+        graph.addNode(end);
+        graph.addEdge(1, 2, 1.0);
+        graph.addEdge(2, 3, 1.0);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 50.0, 40.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+        AStar aStar = new AStar(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+
+        Map<Node, Node> predecessors = new HashMap<>();
+        predecessors.put(end, mid);
+        predecessors.put(mid, start);
+        PathResult result = aStar.reconstructPath(predecessors);
+        assertEquals(Arrays.asList(start, mid, end), result.getPath());
+    }
+
+    // 测试ShortestTimeFirst在未知道路类型时的默认速度
+    @Test
+    public void testShortestTimeFirstDefaultRoadTypeSpeed() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node end = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(end);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 1000, false, 60.0, 60.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+        ShortestTimeFirst shortestTimeFirst = new ShortestTimeFirst(graph, start, end, vehicle, trafficCondition, weatherCondition, 0);
+
+        Node gravel = node(3, false, "Gravel", false, false, false, 1.0, 0, 24);
+        Edge gravelEdge = new Edge(gravel, 100.0);
+        assertEquals(2.0, shortestTimeFirst.calculateTravelTime(gravelEdge, vehicle), 1e-6);
+    }
+
+    // 测试Bellman-Ford在不可达目的地时的返回
+    @Test
+    public void testBellmanFordUnreachableDestination() {
+        Graph graph = new Graph();
+        Node start = node(1, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        Node isolated = node(2, false, "Regular Road", false, false, false, 1.0, 0, 24);
+        graph.addNode(start);
+        graph.addNode(isolated);
+
+        Vehicle vehicle = new Vehicle("Standard Vehicle", 500, false, 20.0, 10.0, 1.0, 0.0, false);
+        TrafficCondition trafficCondition = new TrafficCondition(new HashMap<>());
+        WeatherCondition weatherCondition = new WeatherCondition("Clear");
+
+        BellmanFord bellmanFord = new BellmanFord(graph, start, isolated, vehicle, trafficCondition, weatherCondition, 0);
+        PathResult result = bellmanFord.findPath();
+        assertNotNull(result);
+        assertEquals(Collections.singletonList(isolated), result.getPath());
     }
 }
