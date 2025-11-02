@@ -75,13 +75,12 @@ public class MementoTest {
     public void testCalendarManagerMonthFiltering() {
         CalendarManager manager = new CalendarManager();
         Date may20 = buildDate(2024, Calendar.MAY, 20);
-        Date may20Later = buildDate(2024, Calendar.MAY, 20);
         Date june1 = buildDate(2024, Calendar.JUNE, 1);
         Note note1 = new Note("A");
         Note note2 = new Note("B");
         Note note3 = new Note("C");
         manager.addNoteByDate(note1, may20);
-        manager.addNoteByDate(note2, may20Later);
+        manager.addNoteByDate(note2, buildDate(2024, Calendar.MAY, 21));
         manager.addNoteByDate(note3, june1);
 
         List<Note> mayNotes = manager.getNotesByMonth(may20);
@@ -89,6 +88,19 @@ public class MementoTest {
         assertTrue(mayNotes.contains(note1));
         assertTrue(mayNotes.contains(note2));
         assertFalse(mayNotes.contains(note3));
+    }
+
+    /**
+     * 测试目的：验证当月份无记录时返回空列表，预期结果为空集合且防御性拷贝有效。
+     */
+    @Test
+    public void testCalendarManagerEmptyMonthResult() {
+        CalendarManager manager = new CalendarManager();
+        Date target = buildDate(2024, Calendar.JANUARY, 1);
+        List<Note> notes = manager.getNotesByMonth(target);
+        assertTrue(notes.isEmpty());
+        notes.add(new Note("外部新增"));
+        assertTrue(manager.getNotesByMonth(target).isEmpty());
     }
 
     /**
@@ -259,6 +271,37 @@ public class MementoTest {
     }
 
     /**
+     * 测试目的：验证撤销后新增的保存会截断旧的未来历史，并确保历史列表为防御性拷贝。
+     */
+    @Test
+    public void testHistoryManagerTrimFutureStates() throws Exception {
+        Note note = new Note("V1");
+        HistoryManager history = new HistoryManager(note);
+        note.setContent("V2");
+        history.save();
+        note.setContent("V3");
+        history.save();
+
+        history.undo();
+        assertEquals("V2", note.getContent());
+        note.setContent("分叉");
+        history.save();
+        assertEquals("分叉", note.getContent());
+        assertEquals(3, history.getHistory().size());
+
+        try {
+            history.redo();
+            fail("分叉后不应再能重做旧版本");
+        } catch (MementoException ex) {
+            assertTrue(ex.getMessage().contains("Cannot redo"));
+        }
+
+        List<Memento> copy = history.getHistory();
+        copy.clear();
+        assertEquals(3, history.getHistory().size());
+    }
+
+    /**
      * 测试目的：验证标签创建时的参数校验以及父子关系维护，预期异常抛出并正确维护层级路径。
      */
     @Test
@@ -290,6 +333,18 @@ public class MementoTest {
         assertEquals(a.hashCode(), b.hashCode());
         assertNotEquals(a, c);
         assertEquals("工作", a.toString());
+    }
+
+    /**
+     * 测试目的：验证根标签路径与相等性边界，预期路径为自身名称且不同类型比较为不等。
+     */
+    @Test
+    public void testLabelRootFullPathAndEqualityEdge() {
+        Label root = new Label("根");
+        assertEquals("根", root.getFullPath());
+        assertTrue(root.getChildren().isEmpty());
+        assertEquals(root, root);
+        assertNotEquals(root, new Object());
     }
 
     /**
@@ -534,6 +589,17 @@ public class MementoTest {
     }
 
     /**
+     * 测试目的：验证权限管理器在用户为null时的返回值，预期所有检查返回空或false。
+     */
+    @Test
+    public void testPermissionManagerNullUser() {
+        PermissionManager manager = new PermissionManager();
+        assertNull(manager.getPermission(null));
+        assertFalse(manager.canEdit(null));
+        assertFalse(manager.canView(null));
+    }
+
+    /**
      * 测试目的：验证插件管理器的注册与执行顺序，预期能按注册顺序执行并忽略空插件。
      */
     @Test
@@ -696,6 +762,18 @@ public class MementoTest {
     }
 
     /**
+     * 测试目的：验证按标签检索未命中时返回空集合，预期结果为空列表。
+     */
+    @Test
+    public void testSearchServiceLabelMismatch() {
+        SearchService service = new SearchService();
+        User user = new User("用户X");
+        Note note = new Note("无标签");
+        user.addNote(note);
+        assertTrue(service.searchByLabel(user, new Label("学习")).isEmpty());
+    }
+
+    /**
      * 测试目的：验证搜索服务的模糊搜索与高亮逻辑，预期大小写不敏感且正确标记关键字。
      */
     @Test
@@ -724,6 +802,16 @@ public class MementoTest {
         User user = new User("空关键字");
         user.addNote(new Note("文本"));
         assertTrue(service.fuzzySearch(user, null).isEmpty());
+    }
+
+    /**
+     * 测试目的：验证高亮逻辑能够正确处理包含特殊字符的关键字，预期输出正确包裹目标片段。
+     */
+    @Test
+    public void testSearchServiceHighlightEscapedKeyword() {
+        SearchService service = new SearchService();
+        String highlighted = service.highlight("使用 C++ 语法", "C++");
+        assertEquals("使用 [[C++]] 语法", highlighted);
     }
 
     /**
@@ -795,6 +883,17 @@ public class MementoTest {
         List<Note> notesCopy = user.getNotes();
         notesCopy.clear();
         assertEquals(1, user.getNotes().size());
+    }
+
+    /**
+     * 测试目的：验证用户添加空笔记不会产生记录且用户名会被裁剪空格。
+     */
+    @Test
+    public void testUserNullNoteAndTrimmedName() {
+        User user = new User("  用户C  ");
+        user.addNote(null);
+        assertTrue(user.getNotes().isEmpty());
+        assertEquals("用户C", user.getName());
     }
 
     /**
