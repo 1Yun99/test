@@ -270,6 +270,7 @@ public class LibraryTest {
         }
         assertNotNull(ex);
         assertEquals("If the user is on the blacklist, they cannot pay the fine.", ex.getMessage());
+        assertEquals(5.0, user.getFines(), 0.0);
     }
 
     @Test
@@ -286,6 +287,7 @@ public class LibraryTest {
         }
         assertNotNull(ex);
         assertEquals("", ex.getMessage());
+        assertEquals(20.0, user.getFines(), 0.0);
     }
 
     @Test
@@ -431,6 +433,7 @@ public class LibraryTest {
         String output = captureOutput(() -> user.addScore(7));
         assertEquals(107, user.getCreditScore());
         assertTrue(output.contains("Credit score increased by 7"));
+        assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
     }
 
     @Test
@@ -441,6 +444,7 @@ public class LibraryTest {
         String output = captureOutput(() -> user.deductScore(20));
         assertEquals(0, user.getCreditScore());
         assertEquals(AccountStatus.FROZEN, user.getAccountStatus());
+        assertTrue(output.contains("Credit score decreased"));
         assertTrue(output.contains("The account has been frozen."));
     }
 
