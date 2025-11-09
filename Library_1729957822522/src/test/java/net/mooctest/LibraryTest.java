@@ -396,6 +396,36 @@ public class LibraryTest {
     }
 
     @Test
+    public void testUserContactInformationAccessors() {
+        // 测试目的：验证用户联系方式的存取方法。
+        RegularUser user = createRegularUser("联系方式用户");
+        user.setEmail("contact@example.com");
+        user.setPhoneNumber("13012345678");
+        assertEquals("contact@example.com", user.getEmail());
+        assertEquals("13012345678", user.getPhoneNumber());
+    }
+
+    @Test
+    public void testUserAddScoreOutputsMessage() {
+        // 测试目的：验证加分操作的输出和结果。
+        RegularUser user = createRegularUser("加分用户");
+        String output = captureOutput(() -> user.addScore(7));
+        assertEquals(107, user.getCreditScore());
+        assertTrue(output.contains("Credit score increased by 7"));
+    }
+
+    @Test
+    public void testUserDeductScoreClampsAndFreezes() {
+        // 测试目的：验证扣分后归零并冻结账号的场景。
+        RegularUser user = createRegularUser("扣分冻结用户");
+        user.creditScore = 6;
+        String output = captureOutput(() -> user.deductScore(20));
+        assertEquals(0, user.getCreditScore());
+        assertEquals(AccountStatus.FROZEN, user.getAccountStatus());
+        assertTrue(output.contains("The account has been frozen."));
+    }
+
+    @Test
     public void testUserCancelReservationFlow() throws Exception {
         // 测试目的：验证取消预约成功与失败的分支。
         RegularUser user = createRegularUser("取消预约用户");
