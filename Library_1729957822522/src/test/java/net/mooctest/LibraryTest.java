@@ -291,14 +291,31 @@ public class LibraryTest {
     }
 
     @Test
+    public void testUserPayFinePartialThenIllegal() {
+        // 测试目的：验证先合法支付部分罚款后再尝试过额支付的情况。
+        RegularUser user = createRegularUser("多段支付用户");
+        user.fines = 15;
+        user.payFine(5);
+        assertEquals(10.0, user.getFines(), 0.0);
+        try {
+            user.payFine(20);
+            fail("支付超过剩余金额应抛异常");
+        } catch (IllegalArgumentException expected) {
+            assertEquals("If the user is on the blacklist, they cannot pay the fine.", expected.getMessage());
+        }
+        assertEquals(10.0, user.getFines(), 0.0);
+    }
+
+    @Test
     public void testUserDeductScoreWithoutFreeze() {
         // 测试目的：验证扣分后信用仍高于阈值时不会冻结账号。
         RegularUser user = createRegularUser("扣分正常用户");
         user.creditScore = 80;
         user.setAccountStatus(AccountStatus.ACTIVE);
-        user.deductScore(10);
+        String output = captureOutput(() -> user.deductScore(10));
         assertEquals(70, user.getCreditScore());
         assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
+        assertTrue(output.contains("Credit score decreased by 10"));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -370,6 +387,9 @@ public class LibraryTest {
         user.reserveBook(book);
         assertEquals(1, user.reservations.size());
         assertNotNull(user.findReservation(book));
+        Reservation stored = user.findReservation(book);
+        assertEquals(book, stored.getBook());
+        assertEquals(user, stored.getUser());
     }
 
     @Test
