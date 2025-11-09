@@ -250,6 +250,102 @@ public class LibraryTest {
         assertTrue(output.contains("Blacklisted users cannot receive notifications."));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testUserReserveWhenBlacklistedThrows() throws Exception {
+        // 测试目的：验证黑名单用户预约直接抛出异常。
+        RegularUser blacklisted = createRegularUser("黑名单预定用户");
+        blacklisted.setAccountStatus(AccountStatus.BLACKLISTED);
+        blacklisted.reserveBook(createBook(BookType.GENERAL, 1));
+    }
+
+    @Test(expected = AccountFrozenException.class)
+    public void testUserReserveWhenFrozenThrowsDirectly() throws Exception {
+        // 测试目的：进一步验证冻结用户预约抛出异常。
+        RegularUser frozen = createRegularUser("冻结预定用户2");
+        frozen.setAccountStatus(AccountStatus.FROZEN);
+        frozen.reserveBook(createBook(BookType.GENERAL, 1));
+    }
+
+    @Test
+    public void testUserReserveWhenFrozenThrows() {
+        // 测试目的：验证冻结用户预约抛出异常。
+        RegularUser frozen = createRegularUser("冻结预定用户");
+        frozen.setAccountStatus(AccountStatus.FROZEN);
+        try {
+            frozen.reserveBook(createBook(BookType.GENERAL, 1));
+            fail("冻结用户预约应失败");
+        } catch (Exception e) {
+            assertTrue(e instanceof AccountFrozenException);
+        }
+    }
+
+    @Test
+    public void testUserReserveDuplicateThrows() {
+        // 测试目的：验证重复预约同一本书时抛出异常。
+        RegularUser user = createRegularUser("重复预约用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        user.reservations.add(book);
+        try {
+            user.reserveBook(book);
+            fail("重复预约应抛出异常");
+        } catch (Exception e) {
+            assertTrue(e instanceof ReservationNotAllowedException);
+        }
+        user.reservations.clear();
+    }
+
+    @Test
+    public void testUserReserveCreditInsufficientThrows() {
+        // 测试目的：验证信用不足无法预约。
+        RegularUser user = createRegularUser("信用不足预约用户");
+        user.creditScore = 40;
+        try {
+            user.reserveBook(createBook(BookType.GENERAL, 1));
+            fail("信用不足应抛出异常");
+        } catch (Exception e) {
+            assertTrue(e instanceof InsufficientCreditException);
+            assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
+        }
+    }
+
+    @Test
+    public void testUserReserveUnavailableAddsMessage() throws Exception {
+        // 测试目的：验证图书不可用时仍可预约，且打印提示。
+        RegularUser user = createRegularUser("预约提示用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        book.setInRepair(true);
+        String output = captureOutput(() -> {
+            try {
+                user.reserveBook(book);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        assertTrue(output.contains("added to the reservation queue"));
+        assertEquals(1, user.reservations.size());
+        assertNotNull(user.findReservation(book));
+    }
+
+    @Test
+    public void testUserCancelReservationFlow() throws Exception {
+        // 测试目的：验证取消预约成功与失败的分支。
+        RegularUser user = createRegularUser("取消预约用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        try {
+            user.cancelReservation(book);
+            fail("未预约取消应抛出异常");
+        } catch (InvalidOperationException expected) {
+            // 预期异常
+        }
+        user.reserveBook(book);
+        Reservation stored = user.findReservation(book);
+        assertNotNull(stored);
+        user.cancelReservation(book);
+        assertNull(user.findReservation(book));
+        assertTrue(book.getReservationQueue().isEmpty());
+        assertFalse(user.reservations.contains(stored));
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     public void testUserReservationFlows() throws Exception {
