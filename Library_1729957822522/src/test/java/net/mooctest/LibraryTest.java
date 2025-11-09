@@ -226,6 +226,7 @@ public class LibraryTest {
         assertTrue(partialOutput.contains("There is still a fine"));
         assertEquals(10.0, user.getFines(), 0.0);
         String clearOutput = captureOutput(() -> user.payFine(10));
+        assertTrue(clearOutput.contains("Paid a fine"));
         assertTrue(clearOutput.contains("account status is restored"));
         assertEquals(0.0, user.getFines(), 0.0);
         assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
@@ -239,6 +240,10 @@ public class LibraryTest {
         user.deductScore(10);
         assertEquals(0, user.getCreditScore());
         assertEquals(AccountStatus.FROZEN, user.getAccountStatus());
+
+        // 再次扣分不会出现负数
+        user.deductScore(5);
+        assertEquals(0, user.getCreditScore());
 
         // 黑名单用户加分抛异常并无法收到通知
         user.setAccountStatus(AccountStatus.BLACKLISTED);
@@ -393,6 +398,20 @@ public class LibraryTest {
         user.setAccountStatus(AccountStatus.ACTIVE);
         String output = captureOutput(() -> user.receiveNotification("欢迎信息"));
         assertTrue(output.contains("Notify user"));
+    }
+
+    @Test
+    public void testUserFindReservationHelper() throws Exception {
+        // 测试目的：验证查找预约的工具方法。
+        RegularUser user = createRegularUser("预约查找用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        assertNull(user.findReservation(book));
+        user.reserveBook(book);
+        assertNotNull(user.findReservation(book));
+        assertEquals(1, user.reservations.size());
+        user.cancelReservation(book);
+        assertNull(user.findReservation(book));
+        assertTrue(user.reservations.isEmpty());
     }
 
     @Test
