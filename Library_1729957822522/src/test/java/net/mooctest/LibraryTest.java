@@ -436,6 +436,24 @@ public class LibraryTest {
         assertTrue(highFineUser.getFines() > 100);
     }
 
+    @Test
+    public void testRegularUserReturnPrintsOverdueMessage() throws Exception {
+        // 测试目的：验证归还超过借阅期时会输出提示信息。
+        RegularUser user = createRegularUser("长借期用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        book.setTotalCopies(1);
+        book.setAvailableCopies(0);
+        addBorrowRecord(user, book, nowPlusDays(-20), nowPlusDays(-5));
+        String output = captureOutput(() -> {
+            try {
+                user.returnBook(book);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        assertTrue(output.contains("Return the book"));
+    }
+
     // ---------------------- VIPUser 行为测试 ----------------------
 
     @Test
@@ -539,6 +557,14 @@ public class LibraryTest {
         } catch (OverdueFineException expected) {
             assertEquals(AccountStatus.FROZEN, highFineVip.getAccountStatus());
         }
+    }
+
+    @Test(expected = InvalidOperationException.class)
+    public void testVipUserReturnFailsWhenNotBorrowed() throws Exception {
+        // 测试目的：验证未借阅的图书归还会抛出异常。
+        VIPUser vipUser = createVipUser("未借阅VIP");
+        Book book = createBook(BookType.GENERAL, 1);
+        vipUser.returnBook(book);
     }
 
     @Test
@@ -667,6 +693,27 @@ public class LibraryTest {
         service.repairCredit(user, 50);
         assertEquals(60, user.getCreditScore());
         assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
+    }
+
+    @Test
+    public void testCreditRepairDoesNotUnfreezeWhenScoreStillLow() throws Exception {
+        // 测试目的：验证支付后信用仍不足时账号不会被激活。
+        CreditRepairService service = new CreditRepairService();
+        RegularUser user = createRegularUser("低分修复用户");
+        user.creditScore = 30;
+        user.setAccountStatus(AccountStatus.FROZEN);
+        service.repairCredit(user, 20);
+        assertEquals(32, user.getCreditScore());
+        assertEquals(AccountStatus.FROZEN, user.getAccountStatus());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCreditRepairFailsForBlacklistedUser() throws Exception {
+        // 测试目的：验证黑名单用户修复信用会失败。
+        CreditRepairService service = new CreditRepairService();
+        RegularUser user = createRegularUser("黑名单修复用户");
+        user.setAccountStatus(AccountStatus.BLACKLISTED);
+        service.repairCredit(user, 20);
     }
 
     // ---------------------- InventoryService 测试 ----------------------
