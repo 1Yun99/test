@@ -403,9 +403,9 @@ public class LibraryTest {
     public void testUserReservationQueueOrdering() throws Exception {
         // 测试目的：验证预约队列按照优先级排序。
         RegularUser regular = createRegularUser("预约普通用户");
-        regular.creditScore = 70;
+        regular.creditScore = 90;
         VIPUser vip = createVipUser("预约VIP用户");
-        vip.creditScore = 60;
+        vip.creditScore = 55;
         Book book = createBook(BookType.GENERAL, 1);
         regular.reserveBook(book);
         vip.reserveBook(book);
@@ -704,25 +704,27 @@ public class LibraryTest {
             fail("罚款过高应抛出异常");
         } catch (OverdueFineException expected) {
             assertEquals(AccountStatus.FROZEN, fineUser.getAccountStatus());
+            assertTrue(fineUser.getFines() > 50);
         }
 
         VIPUser unavailableUser = createVipUser("VIP库存不足");
         Book unavailableBook = createBook(BookType.GENERAL, 1);
-        unavailableBook.setAvailableCopies(0);
+        unavailableBook.setInRepair(true);
         try {
             unavailableUser.borrowBook(unavailableBook);
             fail("库存不足应抛出异常");
         } catch (BookNotAvailableException expected) {
-            // 预期异常
+            assertEquals(0, unavailableUser.getBorrowedBooks().size());
         }
 
         VIPUser lowCreditUser = createVipUser("VIP信用不足");
         lowCreditUser.creditScore = 40;
+        AccountStatus originalStatus = lowCreditUser.getAccountStatus();
         try {
             lowCreditUser.borrowBook(createBook(BookType.GENERAL, 1));
             fail("信用不足借书应抛出异常");
         } catch (InsufficientCreditException expected) {
-            // 预期异常
+            assertEquals(originalStatus, lowCreditUser.getAccountStatus());
         }
     }
 
@@ -908,6 +910,36 @@ public class LibraryTest {
         Reservation reservation = new Reservation(book, user);
         assertEquals(75, reservation.getPriority());
         assertEquals(user, reservation.getUser());
+    }
+
+    @Test
+    public void testReservationPriorityMessagesForVipAndOverdue() {
+        // 测试目的：验证 VIP 用户以及逾期记录的提示信息。
+        VIPUser vip = createVipUser("提示VIP");
+        vip.creditScore = 60;
+        Book book = createBook(BookType.GENERAL, 1);
+        BorrowRecord overdue = new BorrowRecord(book, vip, day(0), day(5));
+        overdue.setReturnDate(day(7));
+        vip.borrowedBooks.add(overdue);
+        final Reservation[] holder = new Reservation[1];
+        String output = captureOutput(() -> holder[0] = new Reservation(book, vip));
+        assertNotNull(holder[0]);
+        assertTrue(output.contains("priority is enhanced"));
+        assertTrue(output.contains("Delayed return records"));
+        assertEquals(65, holder[0].getPriority());
+    }
+
+    @Test
+    public void testReservationBlacklistedMessage() {
+        // 测试目的：验证黑名单用户预约提示信息。
+        RegularUser user = createRegularUser("黑名单提示用户");
+        user.setAccountStatus(AccountStatus.BLACKLISTED);
+        Book book = createBook(BookType.GENERAL, 1);
+        final Reservation[] holder = new Reservation[1];
+        String output = captureOutput(() -> holder[0] = new Reservation(book, user));
+        assertNotNull(holder[0]);
+        assertEquals(-1, holder[0].getPriority());
+        assertTrue(output.contains("Blacklisted users cannot reserve books."));
     }
 
     // ---------------------- AutoRenewal 与 CreditRepair 测试 ----------------------
