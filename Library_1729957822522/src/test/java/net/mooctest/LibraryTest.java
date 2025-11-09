@@ -336,7 +336,8 @@ public class LibraryTest {
 
         RegularUser limitUser = createRegularUser("超限用户");
         for (int i = 0; i < 5; i++) {
-            addBorrowRecord(limitUser, createBook(BookType.GENERAL, 1), day(0), day(5));
+            BorrowRecord record = addBorrowRecord(limitUser, createBook(BookType.GENERAL, 1), day(i), day(i + 5));
+            assertNotNull(limitUser.findBorrowRecord(record.getBook()));
         }
         try {
             limitUser.borrowBook(createBook(BookType.GENERAL, 1));
@@ -352,6 +353,7 @@ public class LibraryTest {
             fail("罚款过高应抛出异常");
         } catch (OverdueFineException expected) {
             assertEquals(AccountStatus.FROZEN, fineUser.getAccountStatus());
+            assertTrue(fineUser.getFines() > 50);
         }
 
         RegularUser unavailableUser = createRegularUser("库存不足用户");
@@ -370,7 +372,7 @@ public class LibraryTest {
             lowCreditUser.borrowBook(createBook(BookType.GENERAL, 1));
             fail("信用不足借书应抛出异常");
         } catch (InsufficientCreditException expected) {
-            // 预期异常
+            assertEquals(50, lowCreditUser.getCreditScore());
         }
 
         RegularUser rareUser = createRegularUser("珍本限制用户");
@@ -440,6 +442,7 @@ public class LibraryTest {
         assertNull(overdueUser.findBorrowRecord(overdueBook));
         BorrowRecord overdueRecord = addBorrowRecord(overdueUser, overdueBook, nowPlusDays(-10), nowPlusDays(-3));
         assertEquals(overdueRecord, overdueUser.findBorrowRecord(overdueBook));
+        assertEquals(0, overdueRecord.getFineAmount(), 0.0);
         overdueUser.returnBook(overdueBook);
         assertTrue(overdueUser.getFines() > 0);
         assertEquals(48, overdueUser.getCreditScore());
@@ -451,7 +454,8 @@ public class LibraryTest {
         Book highFineBook = createBook(BookType.GENERAL, 1);
         highFineBook.setTotalCopies(1);
         highFineBook.setAvailableCopies(0);
-        addBorrowRecord(highFineUser, highFineBook, nowPlusDays(-10), nowPlusDays(-2));
+        BorrowRecord highFineRecord = addBorrowRecord(highFineUser, highFineBook, nowPlusDays(-10), nowPlusDays(-2));
+        assertEquals(highFineRecord, highFineUser.findBorrowRecord(highFineBook));
         try {
             highFineUser.returnBook(highFineBook);
             fail("罚款过高应抛出异常");
@@ -562,7 +566,8 @@ public class LibraryTest {
         Book overdueBook = createBook(BookType.GENERAL, 1);
         overdueBook.setTotalCopies(1);
         overdueBook.setAvailableCopies(0);
-        addBorrowRecord(vipUser, overdueBook, nowPlusDays(-10), nowPlusDays(-1));
+        BorrowRecord vipOverdueRecord = addBorrowRecord(vipUser, overdueBook, nowPlusDays(-10), nowPlusDays(-1));
+        assertEquals(vipOverdueRecord, vipUser.findBorrowRecord(overdueBook));
         vipUser.setAccountStatus(AccountStatus.ACTIVE);
         vipUser.returnBook(overdueBook);
         assertTrue(vipUser.getFines() > 0);
@@ -659,11 +664,28 @@ public class LibraryTest {
         vipUser.creditScore = 80;
         Reservation vipReservation = new Reservation(book, vipUser);
         assertEquals(90, vipReservation.getPriority());
+        assertTrue(vipReservation.getUser() instanceof VIPUser);
 
         RegularUser blacklisted = createRegularUser("黑名单预约");
         blacklisted.setAccountStatus(AccountStatus.BLACKLISTED);
         Reservation blockedReservation = new Reservation(book, blacklisted);
         assertEquals(-1, blockedReservation.getPriority());
+    }
+
+    @Test
+    public void testReservationPriorityCalculationMultipleOverdues() {
+        // 测试目的：验证多次逾期会累积降低预约优先级。
+        RegularUser user = createRegularUser("多次逾期用户");
+        user.creditScore = 90;
+        Book book = createBook(BookType.GENERAL, 1);
+        BorrowRecord overdue1 = new BorrowRecord(book, user, day(0), day(5));
+        overdue1.setReturnDate(day(7));
+        BorrowRecord overdue2 = new BorrowRecord(book, user, day(10), day(15));
+        overdue2.setReturnDate(day(20));
+        user.borrowedBooks.add(overdue1);
+        user.borrowedBooks.add(overdue2);
+        Reservation reservation = new Reservation(book, user);
+        assertEquals(80, reservation.getPriority());
     }
 
     // ---------------------- AutoRenewal 与 CreditRepair 测试 ----------------------
