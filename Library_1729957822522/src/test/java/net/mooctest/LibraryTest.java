@@ -373,6 +373,63 @@ public class LibraryTest {
         assertFalse(user.reservations.contains(stored));
     }
 
+    @Test
+    public void testUserDeductScoreWhenBlacklisted() {
+        // 测试目的：验证黑名单用户扣分不会改变其账户状态。
+        RegularUser user = createRegularUser("扣分黑名单");
+        user.setAccountStatus(AccountStatus.BLACKLISTED);
+        user.creditScore = 5;
+        user.deductScore(20);
+        assertEquals(AccountStatus.BLACKLISTED, user.getAccountStatus());
+        assertEquals(0, user.getCreditScore());
+    }
+
+    @Test
+    public void testUserPayFineActiveAccount() {
+        // 测试目的：验证正常状态下分次缴纳罚款的提示信息。
+        RegularUser user = createRegularUser("正常缴费用户");
+        user.fines = 15;
+        user.setAccountStatus(AccountStatus.ACTIVE);
+        String firstOutput = captureOutput(() -> user.payFine(5));
+        assertTrue(firstOutput.contains("There is still a fine"));
+        assertEquals(10.0, user.getFines(), 0.0);
+        String secondOutput = captureOutput(() -> user.payFine(10));
+        assertTrue(secondOutput.contains("Paid a fine"));
+        assertEquals(0.0, user.getFines(), 0.0);
+        assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
+    }
+
+    @Test
+    public void testUserReservationQueueOrdering() throws Exception {
+        // 测试目的：验证预约队列按照优先级排序。
+        RegularUser regular = createRegularUser("预约普通用户");
+        regular.creditScore = 70;
+        VIPUser vip = createVipUser("预约VIP用户");
+        vip.creditScore = 60;
+        Book book = createBook(BookType.GENERAL, 1);
+        regular.reserveBook(book);
+        vip.reserveBook(book);
+        Reservation first = book.getReservationQueue().poll();
+        assertEquals(vip, first.getUser());
+        Reservation second = book.getReservationQueue().poll();
+        assertEquals(regular, second.getUser());
+    }
+
+    @Test
+    public void testUserReserveQueueAfterCancel() throws Exception {
+        // 测试目的：验证多个预约取消后队列状态正确。
+        RegularUser user1 = createRegularUser("预约用户1");
+        RegularUser user2 = createRegularUser("预约用户2");
+        Book book = createBook(BookType.GENERAL, 1);
+        user1.reserveBook(book);
+        user2.reserveBook(book);
+        assertEquals(2, book.getReservationQueue().size());
+        user1.cancelReservation(book);
+        assertEquals(1, book.getReservationQueue().size());
+        Reservation remain = book.getReservationQueue().peek();
+        assertEquals(user2, remain.getUser());
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     public void testUserReservationFlows() throws Exception {
@@ -631,13 +688,13 @@ public class LibraryTest {
 
         VIPUser limitUser = createVipUser("VIP超限用户");
         for (int i = 0; i < 10; i++) {
-            addBorrowRecord(limitUser, createBook(BookType.GENERAL, 1), 0, 5);
+            addBorrowRecord(limitUser, createBook(BookType.GENERAL, 1), day(i), day(i + 2));
         }
         try {
             limitUser.borrowBook(createBook(BookType.GENERAL, 1));
             fail("超过上限应抛出异常");
         } catch (InvalidOperationException expected) {
-            // 预期异常
+            assertEquals(10, limitUser.getBorrowedBooks().size());
         }
 
         VIPUser fineUser = createVipUser("VIP罚款用户");
@@ -718,6 +775,37 @@ public class LibraryTest {
         VIPUser vipUser = createVipUser("未借阅VIP");
         Book book = createBook(BookType.GENERAL, 1);
         vipUser.returnBook(book);
+    }
+
+    @Test
+    public void testVipUserBorrowLimitStandalone() {
+        // 测试目的：进一步验证借阅上限的独立场景。
+        VIPUser vipUser = createVipUser("独立超限VIP");
+        for (int i = 0; i < 10; i++) {
+            vipUser.borrowedBooks.add(new BorrowRecord(createBook(BookType.GENERAL, 1), vipUser, day(i), day(i + 1)));
+        }
+        try {
+            vipUser.borrowBook(createBook(BookType.GENERAL, 2));
+            fail("超过借阅数量仍成功是不允许的");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidOperationException);
+        }
+    }
+
+    @Test
+    public void testVipUserBorrowLowCreditMaintainsAccountStatus() {
+        // 测试目的：验证信用不足不会改变 VIP 用户账户状态。
+        VIPUser vipUser = createVipUser("信用不足VIP");
+        vipUser.creditScore = 40;
+        vipUser.setAccountStatus(AccountStatus.ACTIVE);
+        try {
+            vipUser.borrowBook(createBook(BookType.GENERAL, 1));
+            fail("信用不足应抛出异常");
+        } catch (Exception e) {
+            assertTrue(e instanceof InsufficientCreditException);
+        }
+        assertEquals(AccountStatus.ACTIVE, vipUser.getAccountStatus());
+        assertEquals(40, vipUser.getCreditScore());
     }
 
     @Test
