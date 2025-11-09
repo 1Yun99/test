@@ -797,6 +797,7 @@ public class LibraryTest {
             assertEquals(AccountStatus.FROZEN, fineUser.getAccountStatus());
             assertTrue(fineUser.getFines() > 50);
         }
+        assertEquals(AccountStatus.FROZEN, fineUser.getAccountStatus());
 
         VIPUser unavailableUser = createVipUser("VIP库存不足");
         Book unavailableBook = createBook(BookType.GENERAL, 1);
@@ -1031,6 +1032,17 @@ public class LibraryTest {
         assertNotNull(holder[0]);
         assertEquals(-1, holder[0].getPriority());
         assertTrue(output.contains("Blacklisted users cannot reserve books."));
+    }
+
+    @Test
+    public void testReservationNeutralMessage() {
+        // 测试目的：验证既非 VIP 也无逾期时不会额外输出提示。
+        RegularUser user = createRegularUser("普通预约提示");
+        user.creditScore = 80;
+        Book book = createBook(BookType.GENERAL, 1);
+        String output = captureOutput(() -> new Reservation(book, user));
+        assertFalse(output.contains("priority is enhanced"));
+        assertFalse(output.contains("Delayed return records"));
     }
 
     // ---------------------- AutoRenewal 与 CreditRepair 测试 ----------------------
