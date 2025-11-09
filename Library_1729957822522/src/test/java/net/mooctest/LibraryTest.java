@@ -1045,6 +1045,26 @@ public class LibraryTest {
         assertFalse(output.contains("Delayed return records"));
     }
 
+    @Test
+    public void testReservationPriorityWithMultipleDelaysAndVip() {
+        // 测试目的：验证同时存在多次逾期与 VIP 加权场景。
+        VIPUser vip = createVipUser("综合VIP");
+        vip.creditScore = 90;
+        Book book = createBook(BookType.GENERAL, 1);
+        BorrowRecord overdue1 = new BorrowRecord(book, vip, day(0), day(5));
+        overdue1.setReturnDate(day(10));
+        BorrowRecord overdue2 = new BorrowRecord(book, vip, day(15), day(20));
+        overdue2.setReturnDate(day(30));
+        vip.borrowedBooks.add(overdue1);
+        vip.borrowedBooks.add(overdue2);
+        final Reservation[] holder = new Reservation[1];
+        String output = captureOutput(() -> holder[0] = new Reservation(book, vip));
+        assertNotNull(holder[0]);
+        assertTrue(output.contains("priority is enhanced"));
+        assertTrue(output.contains("Delayed return records"));
+        assertEquals(90 + 10 - 5 - 5, holder[0].getPriority());
+    }
+
     // ---------------------- AutoRenewal 与 CreditRepair 测试 ----------------------
 
     @Test
