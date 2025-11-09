@@ -362,6 +362,17 @@ public class LibraryTest {
     }
 
     @Test
+    public void testUserReserveAtCreditBoundarySucceeds() throws Exception {
+        // 测试目的：验证信用分等于 50 时仍可预约。
+        RegularUser user = createRegularUser("边界预约用户");
+        user.creditScore = 50;
+        Book book = createBook(BookType.GENERAL, 1);
+        user.reserveBook(book);
+        assertEquals(1, user.reservations.size());
+        assertNotNull(user.findReservation(book));
+    }
+
+    @Test
     public void testUserReserveUnavailableAddsMessage() throws Exception {
         // 测试目的：验证图书不可用时仍可预约，且打印提示。
         RegularUser user = createRegularUser("预约提示用户");
@@ -446,6 +457,7 @@ public class LibraryTest {
         assertEquals(AccountStatus.FROZEN, user.getAccountStatus());
         assertTrue(output.contains("Credit score decreased"));
         assertTrue(output.contains("The account has been frozen."));
+        assertTrue(output.contains("Credit score decreased by 20"));
     }
 
     @Test
@@ -508,6 +520,7 @@ public class LibraryTest {
         assertEquals(vip, first.getUser());
         Reservation second = book.getReservationQueue().poll();
         assertEquals(regular, second.getUser());
+        assertNull(book.getReservationQueue().poll());
     }
 
     @Test
@@ -681,6 +694,18 @@ public class LibraryTest {
         assertTrue(user.getBorrowedBooks().isEmpty());
         assertEquals(103, user.getCreditScore());
         assertEquals(2, book.getAvailableCopies());
+    }
+
+    @Test
+    public void testRegularUserBorrowAtCreditBoundary() throws Exception {
+        // 测试目的：验证信用等于 60 时依然可以借阅。
+        RegularUser user = createRegularUser("信用边界普通用户");
+        user.creditScore = 60;
+        Book book = createBook(BookType.GENERAL, 1);
+        user.borrowBook(book);
+        assertEquals(1, user.getBorrowedBooks().size());
+        assertEquals(61, user.getCreditScore());
+        assertEquals(0, book.getAvailableCopies());
     }
 
     @Test
@@ -876,6 +901,21 @@ public class LibraryTest {
     }
 
     @Test
+    public void testVipUserBorrowAtCreditBoundary() throws Exception {
+        // 测试目的：验证 VIP 用户信用等于 50 时仍可借阅。
+        VIPUser vipUser = createVipUser("信用边界VIP");
+        vipUser.creditScore = 50;
+        Book rareBook = createBook(BookType.RARE, 1);
+        vipUser.borrowBook(rareBook);
+        assertEquals(1, vipUser.getBorrowedBooks().size());
+        BorrowRecord record = vipUser.getBorrowedBooks().get(0);
+        assertNotNull(record);
+        assertTrue(record.getDueDate().after(new Date(System.currentTimeMillis())));
+        assertEquals(52, vipUser.getCreditScore());
+        assertEquals(0, rareBook.getAvailableCopies());
+    }
+
+    @Test
     public void testVipUserBorrowLimitStandalone() {
         // 测试目的：进一步验证借阅上限的独立场景。
         VIPUser vipUser = createVipUser("独立超限VIP");
@@ -1047,6 +1087,17 @@ public class LibraryTest {
         String output = captureOutput(() -> new Reservation(book, user));
         assertFalse(output.contains("priority is enhanced"));
         assertFalse(output.contains("Delayed return records"));
+    }
+
+    @Test
+    public void testReservationRemoveMissingDisplaysMessage() {
+        // 测试目的：验证移除不存在的预约时提示信息。
+        RegularUser user = createRegularUser("移除提示用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        Reservation phantom = new Reservation(book, user);
+        String output = captureOutput(() -> book.removeReservation(phantom));
+        assertTrue(output.contains("This reservation is not in the reservation queue."));
+        assertTrue(book.getReservationQueue().isEmpty());
     }
 
     @Test
