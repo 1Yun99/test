@@ -222,9 +222,11 @@ public class LibraryTest {
         // 解冻用户并逐步清除罚款
         user.setAccountStatus(AccountStatus.FROZEN);
         user.fines = 20;
-        user.payFine(10);
+        String partialOutput = captureOutput(() -> user.payFine(10));
+        assertTrue(partialOutput.contains("There is still a fine"));
         assertEquals(10.0, user.getFines(), 0.0);
-        user.payFine(10);
+        String clearOutput = captureOutput(() -> user.payFine(10));
+        assertTrue(clearOutput.contains("account status is restored"));
         assertEquals(0.0, user.getFines(), 0.0);
         assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
 
@@ -284,14 +286,16 @@ public class LibraryTest {
         // 测试目的：验证重复预约同一本书时抛出异常。
         RegularUser user = createRegularUser("重复预约用户");
         Book book = createBook(BookType.GENERAL, 1);
-        user.reservations.add(book);
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List rawReservations = (List) user.reservations;
+        rawReservations.add(book);
         try {
             user.reserveBook(book);
             fail("重复预约应抛出异常");
         } catch (Exception e) {
             assertTrue(e instanceof ReservationNotAllowedException);
         }
-        user.reservations.clear();
+        rawReservations.clear();
     }
 
     @Test
@@ -324,6 +328,29 @@ public class LibraryTest {
         assertTrue(output.contains("added to the reservation queue"));
         assertEquals(1, user.reservations.size());
         assertNotNull(user.findReservation(book));
+    }
+
+    @Test
+    public void testUserReserveSuccessWhenAvailable() throws Exception {
+        // 测试目的：验证图书可用时预约成功并进入优先队列。
+        RegularUser user = createRegularUser("成功预约用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        user.reserveBook(book);
+        Reservation reservation = user.findReservation(book);
+        assertNotNull(reservation);
+        assertEquals(book, reservation.getBook());
+        assertEquals(user, reservation.getUser());
+        assertEquals(user.getCreditScore(), reservation.getPriority());
+        assertEquals(1, book.getReservationQueue().size());
+    }
+
+    @Test
+    public void testUserReceiveNotificationActive() {
+        // 测试目的：验证正常用户可以接收通知。
+        RegularUser user = createRegularUser("通知正常用户");
+        user.setAccountStatus(AccountStatus.ACTIVE);
+        String output = captureOutput(() -> user.receiveNotification("欢迎信息"));
+        assertTrue(output.contains("Notify user"));
     }
 
     @Test
@@ -782,6 +809,17 @@ public class LibraryTest {
         user.borrowedBooks.add(overdue2);
         Reservation reservation = new Reservation(book, user);
         assertEquals(80, reservation.getPriority());
+    }
+
+    @Test
+    public void testReservationPriorityWithoutAdjustments() {
+        // 测试目的：验证没有额外加减分时优先级等于信用分。
+        RegularUser user = createRegularUser("基准预约用户");
+        user.creditScore = 75;
+        Book book = createBook(BookType.GENERAL, 1);
+        Reservation reservation = new Reservation(book, user);
+        assertEquals(75, reservation.getPriority());
+        assertEquals(user, reservation.getUser());
     }
 
     // ---------------------- AutoRenewal 与 CreditRepair 测试 ----------------------
