@@ -890,6 +890,7 @@ public class LibraryTest {
         } catch (OverdueFineException expected) {
             assertEquals(AccountStatus.FROZEN, highFineVip.getAccountStatus());
         }
+        assertTrue(highFineVip.getFines() > 100);
     }
 
     @Test(expected = InvalidOperationException.class)
