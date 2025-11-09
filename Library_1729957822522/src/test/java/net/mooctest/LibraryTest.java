@@ -336,7 +336,7 @@ public class LibraryTest {
 
         RegularUser limitUser = createRegularUser("超限用户");
         for (int i = 0; i < 5; i++) {
-            addBorrowRecord(limitUser, createBook(BookType.GENERAL, 1), 0, 5);
+            addBorrowRecord(limitUser, createBook(BookType.GENERAL, 1), day(0), day(5));
         }
         try {
             limitUser.borrowBook(createBook(BookType.GENERAL, 1));
@@ -386,6 +386,7 @@ public class LibraryTest {
         special.setAvailableCopies(0);
         reserveUser.borrowBook(special);
         assertEquals(1, special.getReservationQueue().size());
+        assertTrue("触发预约时不应新增借阅记录", reserveUser.getBorrowedBooks().isEmpty());
     }
 
     @Test
@@ -406,6 +407,28 @@ public class LibraryTest {
     }
 
     @Test
+    public void testRegularUserFindBorrowRecordUtility() {
+        // 测试目的：验证普通用户查询借阅记录的辅助方法。
+        RegularUser user = createRegularUser("记录查询用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        assertNull(user.findBorrowRecord(book));
+        BorrowRecord record = addBorrowRecord(user, book, day(1), day(5));
+        assertEquals(record, user.findBorrowRecord(book));
+        user.borrowedBooks.remove(record);
+        assertNull(user.findBorrowRecord(book));
+    }
+
+    @Test
+    public void testRegularUserCalculateDueDateHelper() {
+        // 测试目的：验证普通用户的到期日计算逻辑。
+        RegularUser user = createRegularUser("日期工具用户");
+        Date borrowDate = day(2);
+        Date dueDate = user.calculateDueDate(borrowDate, 14);
+        assertEquals(day(16), dueDate);
+        assertEquals(14, (dueDate.getTime() - borrowDate.getTime()) / ONE_DAY);
+    }
+
+    @Test
     public void testRegularUserReturnOverdueAndFineHandling() throws Exception {
         // 测试目的：验证逾期归还的扣分、冻结与高额罚款处理。
         RegularUser overdueUser = createRegularUser("逾期用户");
@@ -414,7 +437,9 @@ public class LibraryTest {
         Book overdueBook = createBook(BookType.GENERAL, 1);
         overdueBook.setTotalCopies(1);
         overdueBook.setAvailableCopies(0);
-        addBorrowRecord(overdueUser, overdueBook, nowPlusDays(-10), nowPlusDays(-3));
+        assertNull(overdueUser.findBorrowRecord(overdueBook));
+        BorrowRecord overdueRecord = addBorrowRecord(overdueUser, overdueBook, nowPlusDays(-10), nowPlusDays(-3));
+        assertEquals(overdueRecord, overdueUser.findBorrowRecord(overdueBook));
         overdueUser.returnBook(overdueBook);
         assertTrue(overdueUser.getFines() > 0);
         assertEquals(48, overdueUser.getCreditScore());
@@ -568,14 +593,38 @@ public class LibraryTest {
     }
 
     @Test
+    public void testVipUserFindBorrowRecordUtility() {
+        // 测试目的：验证 VIP 用户的借阅记录查询逻辑。
+        VIPUser vipUser = createVipUser("VIP记录用户");
+        Book book = createBook(BookType.GENERAL, 1);
+        assertNull(vipUser.findBorrowRecord(book));
+        BorrowRecord record = addBorrowRecord(vipUser, book, day(0), day(6));
+        assertEquals(record, vipUser.findBorrowRecord(book));
+        vipUser.borrowedBooks.clear();
+        assertNull(vipUser.findBorrowRecord(book));
+    }
+
+    @Test
+    public void testVipUserCalculateDueDateHelper() {
+        // 测试目的：验证 VIP 用户的到期日计算逻辑。
+        VIPUser vipUser = createVipUser("VIP日期用户");
+        Date borrowDate = day(3);
+        Date dueDate = vipUser.calculateDueDate(borrowDate, 30);
+        assertEquals(day(33), dueDate);
+        assertEquals(30, (dueDate.getTime() - borrowDate.getTime()) / ONE_DAY);
+    }
+
+    @Test
     public void testVipUserExtendBorrowPeriodScenarios() throws Exception {
         // 测试目的：验证 VIP 用户续借的成功与异常分支。
         VIPUser vipUser = createVipUser("续借VIP");
         Book book = createBook(BookType.GENERAL, 1);
         BorrowRecord record = addBorrowRecord(vipUser, book, day(0), day(10));
+        assertEquals(record, vipUser.findBorrowRecord(book));
 
         vipUser.extendBorrowPeriod(book);
-        assertTrue(record.getDueDate().after(day(10)));
+        assertEquals(day(17), record.getDueDate());
+        assertEquals(7, (record.getDueDate().getTime() - day(10).getTime()) / ONE_DAY);
 
         try {
             vipUser.extendBorrowPeriod(book);
@@ -669,10 +718,12 @@ public class LibraryTest {
         user.creditScore = 80;
         user.setAccountStatus(AccountStatus.ACTIVE);
         Book book = createBook(BookType.GENERAL, 1);
-        BorrowRecord record = addBorrowRecord(user, book, nowPlusDays(-5), nowPlusDays(0));
+        BorrowRecord record = addBorrowRecord(user, book, day(0), day(10));
         Date before = record.getDueDate();
         service.autoRenew(user, book);
         assertTrue(record.getDueDate().after(before));
+        assertEquals(day(24), record.getDueDate());
+        assertEquals(14, (record.getDueDate().getTime() - before.getTime()) / ONE_DAY);
     }
 
     @Test
