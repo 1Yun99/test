@@ -428,6 +428,23 @@ public class LibraryTest {
     }
 
     @Test
+    public void testUserCancelSpecificReservationAmongMultiple() throws Exception {
+        // 测试目的：验证多个预约时正确取消指定图书。
+        RegularUser user = createRegularUser("多预约取消用户");
+        Book book1 = createBook(BookType.GENERAL, 1);
+        Book book2 = createBook(BookType.GENERAL, 1);
+        user.reserveBook(book1);
+        user.reserveBook(book2);
+        assertEquals(2, user.reservations.size());
+        user.cancelReservation(book2);
+        assertEquals(1, user.reservations.size());
+        assertNotNull(user.findReservation(book1));
+        assertNull(user.findReservation(book2));
+        assertEquals(1, book1.getReservationQueue().size());
+        assertTrue(book2.getReservationQueue().isEmpty());
+    }
+
+    @Test
     public void testUserContactInformationAccessors() {
         // 测试目的：验证用户联系方式的存取方法。
         RegularUser user = createRegularUser("联系方式用户");
@@ -689,6 +706,9 @@ public class LibraryTest {
         assertEquals(1, user.getBorrowedBooks().size());
         assertEquals(101, user.getCreditScore());
         assertEquals(1, book.getAvailableCopies());
+        BorrowRecord record = user.getBorrowedBooks().get(0);
+        long daysBetween = (record.getDueDate().getTime() - record.getBorrowDate().getTime()) / ONE_DAY;
+        assertEquals(14, daysBetween);
 
         user.returnBook(book);
         assertTrue(user.getBorrowedBooks().isEmpty());
@@ -859,6 +879,9 @@ public class LibraryTest {
         assertEquals(1, vipUser.getBorrowedBooks().size());
         assertEquals(102, vipUser.getCreditScore());
         assertEquals(1, rareBook.getAvailableCopies());
+        BorrowRecord vipRecord = vipUser.getBorrowedBooks().get(0);
+        long vipBorrowDays = (vipRecord.getDueDate().getTime() - vipRecord.getBorrowDate().getTime()) / ONE_DAY;
+        assertEquals(30, vipBorrowDays);
 
         vipUser.returnBook(rareBook);
         assertTrue(vipUser.getBorrowedBooks().isEmpty());
