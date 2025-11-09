@@ -252,6 +252,48 @@ public class LibraryTest {
         assertTrue(output.contains("Blacklisted users cannot receive notifications."));
     }
 
+    @Test
+    public void testUserPayFineInvalidAmountMessage() {
+        // 测试目的：验证支付金额超过罚款时的提示信息。
+        RegularUser user = createRegularUser("支付信息用户");
+        user.fines = 5;
+        IllegalArgumentException ex = null;
+        try {
+            user.payFine(10);
+        } catch (IllegalArgumentException e) {
+            ex = e;
+        }
+        assertNotNull(ex);
+        assertEquals("If the user is on the blacklist, they cannot pay the fine.", ex.getMessage());
+    }
+
+    @Test
+    public void testUserPayFineWhenBlacklistedMessage() {
+        // 测试目的：验证黑名单用户支付罚款时的异常信息。
+        RegularUser user = createRegularUser("黑名单支付用户");
+        user.setAccountStatus(AccountStatus.BLACKLISTED);
+        user.fines = 20;
+        IllegalStateException ex = null;
+        try {
+            user.payFine(10);
+        } catch (IllegalStateException e) {
+            ex = e;
+        }
+        assertNotNull(ex);
+        assertEquals("", ex.getMessage());
+    }
+
+    @Test
+    public void testUserDeductScoreWithoutFreeze() {
+        // 测试目的：验证扣分后信用仍高于阈值时不会冻结账号。
+        RegularUser user = createRegularUser("扣分正常用户");
+        user.creditScore = 80;
+        user.setAccountStatus(AccountStatus.ACTIVE);
+        user.deductScore(10);
+        assertEquals(70, user.getCreditScore());
+        assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testUserReserveWhenBlacklistedThrows() throws Exception {
         // 测试目的：验证黑名单用户预约直接抛出异常。
