@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite tests="60" failures="0" name="net.mooctest.AStarTest" time="0.085" errors="0" skipped="0">
+  <properties>
+    <property name="jansi.mode" value="force"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="java.vm.version" value="21.0.8+9-Ubuntu-0ubuntu124.04.1"/>
+    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-21-openjdk-amd64/lib"/>
+    <property name="maven.multiModuleProjectDirectory" value="/home/engine/project/PathFinding_1731801257496"/>
+    <property name="java.vm.vendor" value="Ubuntu"/>
+    <property name="java.vendor.url" value="https://ubuntu.com/"/>
+    <property name="guice.disable.misplaced.annotation.check" value="true"/>
+    <property name="path.separator" value=":"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="/home/engine/project/PathFinding_1731801257496"/>
+    <property name="java.vm.compressedOopsMode" value="32-bit"/>
+    <property name="java.runtime.version" value="21.0.8+9-Ubuntu-0ubuntu124.04.1"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.io.tmpdir" value="/tmp"/>
+    <property name="line.separator" value="
+"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="stderr.encoding" value="UTF-8"/>
+    <property name="os.name" value="Linux"/>
+    <property name="classworlds.conf" value="/usr/share/maven/bin/m2.conf"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="stdout.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/usr/lib/x86_64-linux-gnu:/usr/local/lib::/usr/java/packages/lib:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
+    <property name="maven.conf" value="/usr/share/maven/conf"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="java.class.version" value="65.0"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="os.version" value="6.12.35"/>
+    <property name="library.jansi.path" value="/usr/share/maven/lib/jansi-native"/>
+    <property name="user.home" value="/home/engine"/>
+    <property name="user.timezone" value="Etc/UTC"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.specification.version" value="21"/>
+    <property name="user.name" value="engine"/>
+    <property name="java.class.path" value="/usr/share/maven/boot/plexus-classworlds-2.x.jar"/>
+    <property name="java.vm.specification.version" value="21"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher test"/>
+    <property name="java.home" value="/usr/lib/jvm/java-21-openjdk-amd64"/>
+    <property name="user.language" value="en"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="java.version" value="21.0.8"/>
+    <property name="native.encoding" value="UTF-8"/>
+    <property name="java.vendor" value="Ubuntu"/>
+    <property name="maven.home" value="/usr/share/maven"/>
+    <property name="file.separator" value="/"/>
+    <property name="java.version.date" value="2025-07-15"/>
+    <property name="java.vendor.url.bug" value="https://bugs.launchpad.net/ubuntu/+source/openjdk-21"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="sun.cpu.endian" value="little"/>
+  </properties>
+  <testcase classname="net.mooctest.AStarTest" name="testThreadLocalAStar_BasicFunctionality" time="0.013"/>
+  <testcase classname="net.mooctest.AStarTest" name="testReachability_ComplexDiagonal_ShouldWorkCorrectly" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNodes_HeapOperationsDetailed" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testPath_BasicOperations" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testGrid_ParentDirectionOperations" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testCheck_FalseCondition_ShouldThrowException" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNode_CreationAndAccess" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testPerformance_LargeGrid" time="0.002"/>
+  <testcase classname="net.mooctest.AStarTest" name="testReachability_BasicCheck" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testMask_InvalidBitCount_ShouldThrowException" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testReachability_WithObstacles" time="0.024"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_Exception_ShouldCleanUpState" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_WithPathSmoothing_ShouldReturnSmootherPath" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_GridBoundary_ShouldWorkCorrectly" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testPath_CapacityGrowth" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNodes_CapacityGrowth" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_SameStartAndEnd_ShouldReturnEmptyPath" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testUtils_BasicChecks" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNodes_HeapOperations" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testVoidSearch_ShouldFillProvidedPath" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNodes_BasicOperations" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testGrid_ClearOperations" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNode_NegativeF_ShouldThrowException" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testGrid_BoundaryChecks" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testPath_PointAccess" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testOpen_AllDirections_ShouldWorkCorrectly" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_UnreachableTarget_ShouldReturnEmptyPath" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testFillPath_WithSmoothing_ShouldWorkCorrectly" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_BasicPathFinding_WithoutObstacles" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_UnwalkableStart_ShouldReturnEmptyPath" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testReachability_ClosestWalkablePoint" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testPoint_CoordinateConversion" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testComplexPathSmoothing" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testPath_EdgeCases" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_UnwalkableEnd_ShouldReturnEmptyPath" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNodes_EmptyHeap_CloseShouldReturnZero" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testThreadSafety" time="0.004"/>
+  <testcase classname="net.mooctest.AStarTest" name="testReachability_WithFence" time="0.003"/>
+  <testcase classname="net.mooctest.AStarTest" name="testPath_RemoveOperation" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testReachability_WithScale" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testReachability_InvalidScale_ShouldThrowException" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testGrid_NodeInfoOperations" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testOpen_WithObstacleChecks_ShouldHandleCorrectly" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNodes_MaxCapacityExceeded_ShouldThrowException" time="0.002"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNode_SetGF" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testReachability_BasicScaleOperations" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testComplexPathfinding" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testTooLongPathException" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testSearch_WithObstacles_ShouldFindAlternativePath" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testGrid_EdgeCases" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testMask_BitCountTooLarge_ShouldThrowException" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testGrid_BasicOperations" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testUtils_Mask" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testCost_HeuristicCalculation" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testCost_Constants" time="0.001"/>
+  <testcase classname="net.mooctest.AStarTest" name="testPath_ClearOperation" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testCheck_FalseConditionWithFormat_ShouldThrowException" time="0.025"/>
+  <testcase classname="net.mooctest.AStarTest" name="testNodes_NodeUpdate" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testStateCleanup" time="0"/>
+  <testcase classname="net.mooctest.AStarTest" name="testCheck_FalseConditionWithMessage_ShouldThrowException" time="0"/>
+</testsuite>
