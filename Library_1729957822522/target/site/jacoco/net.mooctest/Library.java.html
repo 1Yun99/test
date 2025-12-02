@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Library.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library</a> &gt; <a href="index.source.html" class="el_package">net.mooctest</a> &gt; <span class="el_source">Library.java</span></div><h1>Library.java</h1><pre class="source lang-java linenums">package net.mooctest;
+
+import net.mooctest.InvalidOperationException;
+
+import java.util.ArrayList;
+import java.util.List;
+
+class Library {
+    private List&lt;Book&gt; books;
+    private List&lt;User&gt; users;
+    private NotificationService notificationService;
+    private AutoRenewalService autoRenewalService;
+    private CreditRepairService creditRepairService;
+    private InventoryService inventoryService;
+
+<span class="nc" id="L16">    public Library() {</span>
+<span class="nc" id="L17">        books = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L18">        users = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L19">        notificationService = new NotificationService();</span>
+<span class="nc" id="L20">        autoRenewalService = new AutoRenewalService();</span>
+<span class="nc" id="L21">        creditRepairService = new CreditRepairService();</span>
+<span class="nc" id="L22">        inventoryService = new InventoryService();</span>
+<span class="nc" id="L23">    }</span>
+
+    public void registerUser(User user) {
+<span class="nc bnc" id="L26" title="All 2 branches missed.">        if (user.getCreditScore() &lt; 50) {</span>
+<span class="nc" id="L27">            System.out.println(&quot;Credit score is too low to register a user.&quot;);</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">        } else if (users.contains(user)) {</span>
+<span class="nc" id="L29">            System.out.println(&quot;User already exists.&quot;);</span>
+        } else {
+<span class="nc" id="L31">            users.add(user);</span>
+<span class="nc" id="L32">            System.out.println(&quot;Successfully registered user:&quot; + user.name);</span>
+        }
+<span class="nc" id="L34">    }</span>
+
+    public void addBook(Book book) {
+<span class="nc bnc" id="L37" title="All 2 branches missed.">        if (books.contains(book)) {</span>
+<span class="nc" id="L38">            System.out.println(&quot;This book already exists.&quot;);</span>
+        } else {
+<span class="nc" id="L40">            books.add(book);</span>
+<span class="nc" id="L41">            System.out.println(&quot;Successfully added book:&quot; + book.getTitle());</span>
+        }
+<span class="nc" id="L43">    }</span>
+
+    public void processReservations(Book book) {
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (!book.isAvailable()) {</span>
+<span class="nc" id="L47">            System.out.println(&quot;The book is unavailable and cannot process reservations.&quot;);</span>
+<span class="nc" id="L48">            return;</span>
+        }
+
+<span class="nc" id="L51">        Reservation nextReservation = book.getReservationQueue().poll();</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (nextReservation != null) {</span>
+<span class="nc" id="L53">            User user = nextReservation.getUser();</span>
+            try {
+<span class="nc" id="L55">                user.borrowBook(book);</span>
+<span class="nc" id="L56">                notificationService.sendNotification(user, &quot;The book [\&quot; + book.getTitle() + \&quot;] you reserved is now available for borrowing.&quot;);</span>
+<span class="nc" id="L57">            } catch (Exception e) {</span>
+<span class="nc" id="L58">                System.out.println(&quot;An error occurred while processing the reservation:&quot; + e.getMessage());</span>
+<span class="nc" id="L59">            }</span>
+        }
+<span class="nc" id="L61">    }</span>
+
+    public void autoRenewBook(User user, Book book) {
+        try {
+<span class="nc" id="L65">            autoRenewalService.autoRenew(user, book);</span>
+<span class="nc" id="L66">            System.out.println(&quot;Successfully automatically renewed book:&quot; + book.getTitle());</span>
+<span class="nc" id="L67">        } catch (Exception e) {</span>
+<span class="nc" id="L68">            System.out.println(&quot;Automatic renewal failed:&quot; + e.getMessage());</span>
+<span class="nc" id="L69">        }</span>
+<span class="nc" id="L70">    }</span>
+
+    public void repairUserCredit(User user, double payment) {
+        try {
+<span class="nc" id="L74">            creditRepairService.repairCredit(user, payment);</span>
+<span class="nc" id="L75">            System.out.println(&quot;User credit repair is successful. Current credit score:&quot; + user.getCreditScore());</span>
+<span class="nc" id="L76">        } catch (InvalidOperationException e) {</span>
+<span class="nc" id="L77">            System.out.println(&quot;Credit repair failed: &quot; + e.getMessage());</span>
+<span class="nc" id="L78">        }</span>
+<span class="nc" id="L79">    }</span>
+
+    public void reportLostBook(User user, Book book) {
+        try {
+<span class="nc" id="L83">            inventoryService.reportLost(book, user);</span>
+<span class="nc" id="L84">            System.out.println(&quot;Book loss report is successful. Book:&quot; + book.getTitle());</span>
+<span class="nc" id="L85">        } catch (Exception e) {</span>
+<span class="nc" id="L86">            System.out.println(&quot;Reporting loss failed:&quot; + e.getMessage());</span>
+<span class="nc" id="L87">        }</span>
+<span class="nc" id="L88">    }</span>
+
+    public void reportDamagedBook(User user, Book book) {
+        try {
+<span class="nc" id="L92">            inventoryService.reportDamaged(book, user);</span>
+<span class="nc" id="L93">            System.out.println(&quot;Book damage report is successful. Book:&quot; + book.getTitle());</span>
+<span class="nc" id="L94">        } catch (Exception e) {</span>
+<span class="nc" id="L95">            System.out.println(&quot;Reporting damage failed:&quot; + e.getMessage());</span>
+<span class="nc" id="L96">        }</span>
+<span class="nc" id="L97">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

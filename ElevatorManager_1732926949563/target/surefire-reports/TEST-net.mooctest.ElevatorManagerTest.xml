@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite tests="139" failures="0" name="net.mooctest.ElevatorManagerTest" time="0.912" errors="0" skipped="0">
+  <properties>
+    <property name="jansi.mode" value="strip"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64"/>
+    <property name="java.vm.version" value="25.472-b08"/>
+    <property name="java.vm.vendor" value="Private Build"/>
+    <property name="maven.multiModuleProjectDirectory" value="/home/engine/project/ElevatorManager_1732926949563"/>
+    <property name="java.vendor.url" value="http://java.oracle.com/"/>
+    <property name="path.separator" value=":"/>
+    <property name="guice.disable.misplaced.annotation.check" value="true"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="/home/engine/project/ElevatorManager_1732926949563"/>
+    <property name="java.runtime.version" value="1.8.0_472-8u472-ga-1~24.04-b08"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
+    <property name="java.endorsed.dirs" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/endorsed"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.io.tmpdir" value="/tmp"/>
+    <property name="line.separator" value="
+"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="os.name" value="Linux"/>
+    <property name="classworlds.conf" value="/usr/share/maven/bin/m2.conf"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/usr/lib/x86_64-linux-gnu:/usr/local/lib::/usr/java/packages/lib/amd64:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
+    <property name="maven.conf" value="/usr/share/maven/conf"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="52.0"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="os.version" value="6.12.35"/>
+    <property name="library.jansi.path" value="/usr/share/maven/lib/jansi-native"/>
+    <property name="user.home" value="/home/engine"/>
+    <property name="user.timezone" value="Etc/UTC"/>
+    <property name="java.awt.printerjob" value="sun.print.PSPrinterJob"/>
+    <property name="java.specification.version" value="1.8"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="user.name" value="engine"/>
+    <property name="java.class.path" value="/usr/share/maven/boot/plexus-classworlds-2.x.jar"/>
+    <property name="java.vm.specification.version" value="1.8"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.home" value="/usr/lib/jvm/java-8-openjdk-amd64/jre"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher -B test"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.language" value="en"/>
+    <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.version" value="1.8.0_472"/>
+    <property name="java.ext.dirs" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext:/usr/java/packages/lib/ext"/>
+    <property name="sun.boot.class.path" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/resources.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jsse.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jce.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/charsets.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jfr.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/classes"/>
+    <property name="java.vendor" value="Private Build"/>
+    <property name="java.specification.maintenance.version" value="6"/>
+    <property name="maven.home" value="/usr/share/maven"/>
+    <property name="file.separator" value="/"/>
+    <property name="java.vendor.url.bug" value="http://bugreport.sun.com/bugreport/"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="sun.cpu.isalist" value=""/>
+  </properties>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testFloorAddAndGetRequestsDown" time="0.01"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testFloorConcurrentAccess" time="0.045"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNotificationServiceSendNotification" time="0.008"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerRedistributeRequests" time="0.007"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerDispatchElevator" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSecurityMonitorSingleton" time="0.009"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerSubmitHighPriorityRequest" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSystemConfigConcurrentAccess" time="0.004"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorHandleEmergency" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceManagerScheduleMaintenance" time="0.005"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineIsPeakHoursFalse" time="0.008"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineUpdateFloorPassengerCount" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPredictiveSchedulingStrategyCalculateCost" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineReportGetters" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testThreadPoolManagerSubmitTask" time="0.103"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorUnloadPassengers" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceManagerNotifyPersonnel" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEnergySavingStrategyBoundaryDistance" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testLogManagerRecordSchedulerEvent" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorManagerEmptyCollection" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testHighEfficiencyStrategyIsCloser" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testFloorCreation" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventWithDifferentTypes" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPredictiveSchedulingStrategyWithHighLoad" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorManagerRegisterElevator" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testLogManagerSystemLog" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEnergySavingStrategySelectIdle" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventBusSingleton" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorManagerSingleton" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testFloorZero" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEnergySavingStrategyNoSuitableElevator" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testHighEfficiencyStrategyWithSameDirection" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSystemConfigBoundaryValues" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNearestElevatorStrategySelectIdle" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceRecordGetters" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSMSChannelSupports" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorUpdateDirectionDown" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorUpdateDirectionIdle" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorGetMaxLoad" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEmailChannelSupports" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineProcessStatusReport" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNotificationGetters" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSecurityMonitorHandleEmergency" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventBusInnerEvent" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEnergySavingStrategySelectMovingNearby" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventTypeEnum" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSMSChannelSend" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventBusPublishWithNoListeners" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorGetScheduler" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorClearAllRequests" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerSingletonNoParams" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSystemConfigSetElevatorCount" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerCreation" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorModeEnum" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSystemConfigDefaultValues" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPassengerRequestDownDirection" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorAddObserver" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testHighEfficiencyStrategyNoElevator" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAllEnumValuesAndValueOf" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNearestElevatorStrategySelectMoving" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSystemConfigSingleton" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorGettersAndSetters" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerUpdateMethod" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testLogManagerRecordElevatorEvent" time="0.003"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNearestElevatorStrategyIsEligible" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorAddDestination" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventBusConcurrentPublish" time="0.105"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceManagerSingleton" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testCompleteAnalyticsScenario" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSystemConfigSetMaxLoad" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventWithNullData" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testLogManagerQueryLogs" time="0.005"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineMultipleReports" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testCompleteElevatorScenario" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNearestElevatorStrategyEqualDistance" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPassengerRequestWithDifferentPriorities" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventBusMultipleListeners" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSpecialNeedsEnum" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNotificationTypes" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testLogManagerSingleton" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testLogManagerQueryLogsWithTimeRange" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEmailChannelSend" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSecurityMonitorMultipleEmergencies" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEnergySavingStrategyWithinDistance" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPriorityEnum" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testFloorMultipleRequests" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerSubmitNormalPriorityRequest" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPredictiveSchedulingStrategyEmptyList" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testThreadPoolManagerMultipleTasks" time="0.502"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineIsPeakHoursBoundary" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNotificationServiceWithEmptyRecipients" time="0.004"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPredictiveSchedulingStrategySelectElevator" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceManagerOnEvent" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerSetDispatchStrategy" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorUpdateDirectionUp" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerExecuteEmergencyProtocol" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPassengerRequestSameFloor" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceManagerRecordMaintenanceResult" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceManagerPerformMaintenance" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testLogManagerRecordEvent" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineSingleton" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorWithMultipleObservers" time="0.004"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineGenerateReport" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSecurityMonitorOnEvent" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testDirectionEnum" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorManagerMultipleRegistrations" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testThreadPoolManagerSingleton" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorStatusReportCreation" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSecurityEventGetters" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testFloorAddAndGetRequestsUp" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorGetLockAndCondition" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testThreadPoolManagerShutdown" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testCompleteNotificationScenario" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerGetRequestsAtFloor" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorManagerGetAllElevators" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testRequestTypeEnum" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorStatusEnum" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testLogManagerQueryLogsNoMatch" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventCreation" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorStatusReportWithDifferentStates" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSystemConfigSetFloorCount" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerSingletonWithParams" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceTaskGetters" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerConcurrentSubmit" time="0.003"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testAnalyticsEngineIsPeakHoursTrue" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNotificationServiceSingleton" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testHighEfficiencyStrategySelectElevator" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPassengerRequestUpDirection" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testNearestElevatorStrategyNoEligible" time="0.001"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testFloorNegative" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testMaintenanceManagerOnEventNonFault" time="0.002"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorCreation" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventBusMultipleEventTypes" time="0.004"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testSchedulerWithEmptyElevatorList" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorManagerGetElevatorByIdNotFound" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testEventBusSubscribeAndPublish" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testPassengerRequestToString" time="0"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorNotifyObservers" time="0.003"/>
+  <testcase classname="net.mooctest.ElevatorManagerTest" name="testElevatorStatusReportToString" time="0.003"/>
+</testsuite>
