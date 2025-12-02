@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Book.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library</a> &gt; <a href="index.source.html" class="el_package">net.mooctest</a> &gt; <span class="el_source">Book.java</span></div><h1>Book.java</h1><pre class="source lang-java linenums">package net.mooctest;
+
+import net.mooctest.BookType;
+import net.mooctest.BookNotAvailableException;
+import net.mooctest.InvalidOperationException;
+
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.Queue;
+class Book {
+    private String title;
+    private String author;
+    private String isbn;
+    private BookType bookType;
+    private int totalCopies;
+    private int availableCopies;
+    private boolean inRepair; // the book under repair or not
+    private boolean isDamaged; // the book is damaged or not
+    private Queue&lt;Reservation&gt; reservationQueue;
+
+<span class="fc" id="L21">    public Book(String title, String author, String isbn, BookType bookType, int totalCopies) {</span>
+<span class="fc" id="L22">        this.title = title;</span>
+<span class="fc" id="L23">        this.author = author;</span>
+<span class="fc" id="L24">        this.isbn = isbn;</span>
+<span class="fc" id="L25">        this.bookType = bookType;</span>
+<span class="fc" id="L26">        this.totalCopies = totalCopies;</span>
+<span class="fc" id="L27">        this.availableCopies = totalCopies;</span>
+<span class="fc" id="L28">        this.inRepair = false;</span>
+<span class="fc" id="L29">        this.isDamaged = false;</span>
+<span class="fc" id="L30">        this.reservationQueue = new PriorityQueue&lt;&gt;(Comparator.comparingInt(Reservation::getPriority));</span>
+<span class="fc" id="L31">    }</span>
+
+    // Judge whether the book is available.
+    public boolean isAvailable() {
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (inRepair) {</span>
+<span class="nc" id="L36">            System.out.println(&quot;The book is under repair and temporarily unavailable.&quot;);</span>
+<span class="nc" id="L37">            return false;</span>
+        }
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if (isDamaged) {</span>
+<span class="nc" id="L40">            System.out.println(&quot;The book is damaged and cannot be borrowed.&quot;);</span>
+<span class="nc" id="L41">            return false;</span>
+        }
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        if (availableCopies &lt;= 0) {</span>
+<span class="nc" id="L44">            System.out.println(&quot;There are no available copies.&quot;);</span>
+<span class="nc" id="L45">            return false;</span>
+        }
+<span class="nc" id="L47">        return true;</span>
+    }
+
+    // Borrow a book.
+    public void borrow() throws Exception {
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (!isAvailable()) {</span>
+<span class="nc" id="L53">            throw new BookNotAvailableException(&quot;The book is unavailable and cannot be borrowed.&quot;);</span>
+        }
+<span class="nc" id="L55">        availableCopies--;</span>
+<span class="nc" id="L56">        System.out.println(&quot;Successfully borrowed the book. Remaining copies:&quot; + availableCopies);</span>
+<span class="nc" id="L57">    }</span>
+
+    // Return a book.
+    public void returnBook() throws InvalidOperationException {
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (availableCopies &gt;= totalCopies) {</span>
+<span class="nc" id="L62">            throw new InvalidOperationException(&quot;All copies are in the library.&quot;);</span>
+        }
+<span class="nc" id="L64">        availableCopies++;</span>
+<span class="nc" id="L65">        System.out.println(&quot;Successfully returned the book. Currently available copies for borrowing:&quot; + availableCopies);</span>
+<span class="nc" id="L66">    }</span>
+
+    // Report book damage.
+    public void reportDamage() {
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (isDamaged) {</span>
+<span class="nc" id="L71">            System.out.println(&quot;This book is damaged. No need to report it again.&quot;);</span>
+        } else {
+<span class="nc" id="L73">            isDamaged = true;</span>
+<span class="nc" id="L74">            System.out.println(&quot;Report book damage.&quot;);</span>
+        }
+<span class="nc" id="L76">    }</span>
+
+    // Report that the book is under repair.
+    public void reportRepair() {
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        if (inRepair) {</span>
+<span class="nc" id="L81">            System.out.println(&quot;The book is already under repair.&quot;);</span>
+        } else {
+<span class="nc" id="L83">            inRepair = true;</span>
+<span class="nc" id="L84">            System.out.println(&quot;Report book repair.&quot;);</span>
+        }
+<span class="nc" id="L86">    }</span>
+
+    // Add a reservation.
+    public void addReservation(Reservation reservation) {
+<span class="nc" id="L90">        reservationQueue.add(reservation);</span>
+<span class="nc" id="L91">        System.out.println(&quot;Reservation added successfully.&quot;);</span>
+<span class="nc" id="L92">    }</span>
+
+    // Remove reservation.
+    public void removeReservation(Reservation reservation) {
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (reservationQueue.contains(reservation)) {</span>
+<span class="nc" id="L97">            reservationQueue.remove(reservation);</span>
+<span class="nc" id="L98">            System.out.println(&quot;Reservation cancelled successfully.&quot;);</span>
+        } else {
+<span class="nc" id="L100">            System.out.println(&quot;This reservation is not in the reservation queue.&quot;);</span>
+        }
+<span class="nc" id="L102">    }</span>
+
+    public BookType getBookType() {
+<span class="nc" id="L105">        return bookType;</span>
+    }
+
+    public Queue&lt;Reservation&gt; getReservationQueue() {
+<span class="nc" id="L109">        return reservationQueue;</span>
+    }
+
+    public void setInRepair(boolean inRepair) {
+<span class="nc" id="L113">        this.inRepair = inRepair;</span>
+<span class="nc" id="L114">    }</span>
+
+    public int getTotalCopies() {
+<span class="nc" id="L117">        return totalCopies;</span>
+    }
+
+    public void setTotalCopies(int totalCopies) {
+<span class="nc" id="L121">        this.totalCopies = totalCopies;</span>
+<span class="nc" id="L122">    }</span>
+
+    public int getAvailableCopies() {
+<span class="nc" id="L125">        return availableCopies;</span>
+    }
+
+    public void setAvailableCopies(int availableCopies) {
+<span class="nc" id="L129">        this.availableCopies = availableCopies;</span>
+<span class="nc" id="L130">    }</span>
+
+    public boolean isDamaged() {
+<span class="nc" id="L133">        return isDamaged;</span>
+    }
+
+    public void setDamaged(boolean damaged) {
+<span class="nc" id="L137">        isDamaged = damaged;</span>
+<span class="nc" id="L138">    }</span>
+
+    public String getTitle() {
+<span class="nc" id="L141">        return title;</span>
+    }
+
+    public void setTitle(String title) {
+<span class="nc" id="L145">        this.title = title;</span>
+<span class="nc" id="L146">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

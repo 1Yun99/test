@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BorrowRecord.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library</a> &gt; <a href="index.source.html" class="el_package">net.mooctest</a> &gt; <span class="el_source">BorrowRecord.java</span></div><h1>BorrowRecord.java</h1><pre class="source lang-java linenums">package net.mooctest;
+
+import net.mooctest.AccountStatus;
+import net.mooctest.BookType;
+
+import java.util.Date;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Calendar;
+
+class BorrowRecord {
+    private Book book;
+    private User user;
+    private Date borrowDate;
+    private Date dueDate;
+    private Date returnDate;
+    private double fineAmount;
+
+<span class="nc" id="L19">    public BorrowRecord(Book book, User user, Date borrowDate, Date dueDate) {</span>
+<span class="nc" id="L20">        this.book = book;</span>
+<span class="nc" id="L21">        this.user = user;</span>
+<span class="nc" id="L22">        this.borrowDate = borrowDate;</span>
+<span class="nc" id="L23">        this.dueDate = dueDate;</span>
+<span class="nc" id="L24">        this.returnDate = null;</span>
+<span class="nc" id="L25">        this.fineAmount = 0.0;</span>
+<span class="nc" id="L26">    }</span>
+
+    public void setReturnDate(Date returnDate) {
+<span class="nc" id="L29">        this.returnDate = returnDate;</span>
+<span class="nc" id="L30">        this.fineAmount = calculateFine();</span>
+<span class="nc" id="L31">    }</span>
+
+    // Calculate fine.
+    public double calculateFine() {
+<span class="nc bnc" id="L35" title="All 4 branches missed.">        if (returnDate == null || returnDate.before(dueDate)) {</span>
+<span class="nc" id="L36">            return 0.0;</span>
+        }
+
+        // Calculate the number of overdue days.
+<span class="nc" id="L40">        long overdueDays = (returnDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24);</span>
+<span class="nc" id="L41">        double baseFine = 1.0; // The basic fine per day is 1 yuan.</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        if (book.getBookType() == BookType.RARE) {</span>
+<span class="nc" id="L43">            baseFine = 5.0;  // For rare books, the fine is 5 yuan per day.</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        } else if (book.getBookType() == BookType.JOURNAL) {</span>
+<span class="nc" id="L45">            baseFine = 2.0;  // For periodicals, the fine is 2 yuan per day.</span>
+        }
+
+        // Add more fine conditions.
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (user.getAccountStatus() == AccountStatus.BLACKLISTED) {</span>
+<span class="nc" id="L50">            System.out.println(&quot;The user has been blacklisted and the fine is doubled.&quot;);</span>
+<span class="nc" id="L51">            baseFine *= 2;</span>
+        }
+
+        // If the book is damaged, an additional fine is required.
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (book.isDamaged()) {</span>
+<span class="nc" id="L56">            baseFine += 50.0;  // The additional fine for a damaged book is 50 yuan.</span>
+<span class="nc" id="L57">            System.out.println(&quot;The book is damaged. An additional fine of 50 yuan is imposed.&quot;);</span>
+        }
+
+<span class="nc" id="L60">        return overdueDays * baseFine;</span>
+    }
+
+    public Book getBook() {
+<span class="nc" id="L64">        return book;</span>
+    }
+
+    public double getFineAmount() {
+<span class="nc" id="L68">        return fineAmount;</span>
+    }
+
+    public Date getBorrowDate() {
+<span class="nc" id="L72">        return borrowDate;</span>
+    }
+
+    public Date getReturnDate() {
+<span class="nc" id="L76">        return returnDate;</span>
+    }
+
+    public Date getDueDate() {
+<span class="nc" id="L80">        return dueDate;</span>
+    }
+
+    public void extendDueDate(int extraDays) {
+<span class="nc" id="L84">        Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L85">        cal.setTime(dueDate);</span>
+<span class="nc" id="L86">        cal.add(Calendar.DAY_OF_MONTH, extraDays);</span>
+<span class="nc" id="L87">        dueDate = cal.getTime();</span>
+<span class="nc" id="L88">        System.out.println(&quot;The borrowing period has been extended to:&quot; + dueDate);</span>
+<span class="nc" id="L89">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

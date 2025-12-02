@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VIPUser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library</a> &gt; <a href="index.source.html" class="el_package">net.mooctest</a> &gt; <span class="el_source">VIPUser.java</span></div><h1>VIPUser.java</h1><pre class="source lang-java linenums">package net.mooctest;
+
+import net.mooctest.AccountStatus;
+import net.mooctest.UserType;
+import net.mooctest.*;
+
+import java.util.*;
+class VIPUser extends User {
+    private static final int BORROW_LIMIT = 10;
+    private static final int BORROW_PERIOD = 30;
+    private boolean hasExtendedBorrow;
+
+    public VIPUser(String name, String userId) {
+<span class="nc" id="L14">        super(name, userId, UserType.VIP);</span>
+<span class="nc" id="L15">        this.hasExtendedBorrow = false;</span>
+<span class="nc" id="L16">    }</span>
+
+    @Override
+    public void borrowBook(Book book) throws Exception {
+<span class="nc bnc" id="L20" title="All 2 branches missed.">        if (accountStatus == AccountStatus.BLACKLISTED) {</span>
+<span class="nc" id="L21">            throw new IllegalStateException(&quot;Blacklisted users cannot borrow books.&quot;);</span>
+        }
+<span class="nc bnc" id="L23" title="All 2 branches missed.">        if (accountStatus == AccountStatus.FROZEN) {</span>
+<span class="nc" id="L24">            throw new AccountFrozenException(&quot;The account is frozen and cannot borrow books.&quot;);</span>
+        }
+<span class="nc bnc" id="L26" title="All 2 branches missed.">        if (borrowedBooks.size() &gt;= BORROW_LIMIT) {</span>
+<span class="nc" id="L27">            throw new InvalidOperationException(&quot;The maximum number of books borrowed has been reached.&quot;);</span>
+        }
+<span class="nc bnc" id="L29" title="All 2 branches missed.">        if (fines &gt; 50) {</span>
+<span class="nc" id="L30">            accountStatus = AccountStatus.FROZEN;</span>
+<span class="nc" id="L31">            throw new OverdueFineException(&quot;The fine is too high. The account has been frozen.&quot;);</span>
+        }
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (!book.isAvailable()) {</span>
+<span class="nc" id="L34">            throw new BookNotAvailableException(&quot;The book is unavailable and cannot be borrowed.&quot;);</span>
+        }
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        if (creditScore &lt; 50) {</span>
+<span class="nc" id="L37">            throw new InsufficientCreditException(&quot;The credit score is too low and borrowing is not allowed.&quot;);</span>
+        }
+
+        // VIP users can borrow rare and precious books.
+<span class="nc" id="L41">        book.borrow();</span>
+<span class="nc" id="L42">        Date borrowDate = new Date();</span>
+<span class="nc" id="L43">        Date dueDate = calculateDueDate(borrowDate, BORROW_PERIOD);</span>
+<span class="nc" id="L44">        BorrowRecord record = new BorrowRecord(book, this, borrowDate, dueDate);</span>
+<span class="nc" id="L45">        borrowedBooks.add(record);</span>
+<span class="nc" id="L46">        creditScore += 2; // Increase credit score.</span>
+<span class="nc" id="L47">        System.out.println(name + &quot; Successfully borrowed &quot; + book.getTitle() + &quot;. Due date: &quot; + dueDate);</span>
+<span class="nc" id="L48">    }</span>
+
+    @Override
+    public void returnBook(Book book) throws Exception {
+<span class="nc" id="L52">        BorrowRecord record = findBorrowRecord(book);</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        if (record == null) {</span>
+<span class="nc" id="L54">            throw new InvalidOperationException(&quot;This book has not been borrowed.&quot;);</span>
+        }
+<span class="nc" id="L56">        book.returnBook();</span>
+<span class="nc" id="L57">        record.setReturnDate(new Date());</span>
+<span class="nc" id="L58">        borrowedBooks.remove(record);</span>
+<span class="nc" id="L59">        fines += record.calculateFine(); // Update fine.</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (fines &gt; 100) {</span>
+<span class="nc" id="L61">            accountStatus = AccountStatus.FROZEN;</span>
+<span class="nc" id="L62">            throw new OverdueFineException(&quot;The fine is too high. The account has been frozen.&quot;);</span>
+        }
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (record.getFineAmount() &gt; 0) {</span>
+<span class="nc" id="L65">            creditScore -= 3; // For VIP users, 3 points will be deducted for overdue.</span>
+        } else {
+<span class="nc" id="L67">            creditScore += 3; // Return books on time. VIP users will gain 3 points.</span>
+        }
+<span class="nc" id="L69">    }</span>
+
+    public void extendBorrowPeriod(Book book) throws Exception {
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (hasExtendedBorrow) {</span>
+<span class="nc" id="L73">            throw new InvalidOperationException(&quot;This book has already been renewed.&quot;);</span>
+        }
+<span class="nc" id="L75">        BorrowRecord record = findBorrowRecord(book);</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (record == null) {</span>
+<span class="nc" id="L77">            throw new InvalidOperationException(&quot;This book has not been borrowed.&quot;);</span>
+        }
+<span class="nc" id="L79">        record.extendDueDate(7); // Renew for 7 days.</span>
+<span class="nc" id="L80">        hasExtendedBorrow = true;</span>
+<span class="nc" id="L81">    }</span>
+
+    public Date calculateDueDate(Date borrowDate, int periodDays) {
+<span class="nc" id="L84">        Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L85">        cal.setTime(borrowDate);</span>
+<span class="nc" id="L86">        cal.add(Calendar.DAY_OF_MONTH, periodDays);</span>
+<span class="nc" id="L87">        return cal.getTime();</span>
+    }
+
+    public BorrowRecord findBorrowRecord(Book book) {
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        for (BorrowRecord record : borrowedBooks) {</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">            if (record.getBook().equals(book)) {</span>
+<span class="nc" id="L93">                return record;</span>
+            }
+<span class="nc" id="L95">        }</span>
+<span class="nc" id="L96">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
